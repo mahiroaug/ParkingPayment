@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 
 contract ParkingPayment is Ownable{
-    address internal owner;
     uint256 public ratePerMinute;
     uint256 public WITHDRAWAL_DELAY;
     
@@ -25,7 +24,6 @@ contract ParkingPayment is Ownable{
     constructor(address initialOwner, uint256 _ratePerMinute)
         Ownable(initialOwner)
     {
-        owner = initialOwner;
         ratePerMinute = _ratePerMinute;
         //WITHDRAWAL_DELAY = 7 days;
         WITHDRAWAL_DELAY = 30 minutes;
@@ -100,7 +98,7 @@ contract ParkingPayment is Ownable{
         bool success;
         success = IERC20(tokenAddress).transfer(designatedOwner[userAddress], netParkingFee);
         require(success, "Payment to parking owner failed.");
-        success = IERC20(tokenAddress).transfer(owner, systemFee);
+        success = IERC20(tokenAddress).transfer(owner(), systemFee);
         require(success, "Payment of system fee failed.");
 
         deposits[userAddress][tokenAddress] -= parkingFee;
@@ -121,7 +119,7 @@ contract ParkingPayment is Ownable{
         require(userAddress != address(0), "User address cannot be zero.");
         require(tokenAddress != address(0), "Token address cannot be zero.");
         require(deposits[userAddress][tokenAddress] > 0, "No remaining funds to withdraw.");
-        require(msg.sender == userAddress || msg.sender == owner, "Only the user or the contract owner can perform this action.");
+        require(msg.sender == userAddress || msg.sender == owner(), "Only the user or the contract owner can perform this action.");
         if (msg.sender == userAddress) {
             require(block.timestamp >= parkingStatus[userAddress].entryTime + WITHDRAWAL_DELAY, "Cannot withdraw before delay period.");
         }
