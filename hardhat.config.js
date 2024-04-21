@@ -24,15 +24,6 @@ module.exports = {
         vaultAccountIds: process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_DEPLOYER,
       },
     },
-    mumbai: {
-      url: "https://rpc.ankr.com/polygon_mumbai",
-      fireblocks: {
-        //apiBaseUrl: process.env.FIREBLOCKS_URL,
-        privateKey: fb_apiSecret,
-        apiKey: process.env.FIREBLOCKS_API_KEY_SIGNER,
-        vaultAccountIds: process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_DEPLOYER,
-      },
-    },
     amoy: {
       url: "https://rpc.ankr.com/polygon_amoy",
       fireblocks: {

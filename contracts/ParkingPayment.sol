@@ -36,6 +36,10 @@ contract ParkingPayment is Ownable{
     function removeParkingOwner(address _parkOwner) public onlyOwner {
         validParkingOwners[_parkOwner] = false;
     }
+    // getter for deposit balance
+    function getDepositBalance(address userAddress, address tokenAddress) public view returns (uint256) {
+        return deposits[userAddress][tokenAddress];
+    }
 
     // deposit tokens
     function depositTokens(address tokenAddress, uint256 amount, address parkingOwner) public {
