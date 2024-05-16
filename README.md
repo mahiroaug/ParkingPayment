@@ -6,6 +6,7 @@
     - [1.2.3. ## STEP3 入庫時](#123--step3-入庫時)
     - [1.2.4. ## STEP4 出庫時](#124--step4-出庫時)
     - [1.2.5. ## STEP5 預託終了](#125--step5-預託終了)
+- [2. Testnet](#2-testnet)
 
 # 1. 業務要件
 
@@ -46,3 +47,16 @@
 
 - 一定期間経過後、Alice はデポジット残高を Alice のアドレスへ引き出すことができる。これはトークンの種類ごとに実行する必要がある。
 - Carol だけはいつでも Alice のデポジット残高を Alice のアドレスへ引き戻すことができる
+
+# 2. Testnet
+
+```bash
+
+#### Polygon Amoy by METAMASK at 2024/05/16
+DELEGATOR_CA=0x9Ce54FFB1ACfD1004fE91b6f124aBf3f88976CaA
+FORWARDER_CA=0xF0085882d78c455d5CcF3a25EAE033e44D6701E1
+TOKENPROXY_CA=0x78b38655E368dF43063467e589639bbAB917410A
+ERC20_CA=0xcF9Efbdbe81F26ea3655Cb5d1B80FcC2B49Ab3Ae
+PARKINGPAYMENT_CA=0xFf387Ae3628309c948fD78291F87dbDC2cD1Ee07
+
+```
