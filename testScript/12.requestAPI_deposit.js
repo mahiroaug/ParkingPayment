@@ -36,6 +36,12 @@ const TOKEN_CA = process.env.TOKENPROXY_CA;
 const TOKEN_ABI =
   require("../artifacts/contracts/V21/JST_V21.sol/JST_V21.json").abi;
 
+//// parking payment
+const PP_CA = process.env.PARKINGPAYMENT_CA;
+const PP_ABI =
+  require("../artifacts/contracts/ParkingPayment.sol/ParkingPayment.json").abi;
+const PO_ADDR = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_PARKOWNER_ADDR;
+
 //// explorer
 const EXPLOERE = process.env.EXPLOERE;
 
@@ -59,65 +65,31 @@ const fireblocks = new FireblocksSDK(fb_apiSecret, fb_apiKey, fb_base_url);
 const alchemyHTTPS = process.env.ALCHEMY_HTTPS;
 const web3_alchemy = createAlchemyWeb3(alchemyHTTPS);
 const token = new web3_alchemy.eth.Contract(TOKEN_ABI, TOKEN_CA);
+const parkingPayment = new web3_alchemy.eth.Contract(PP_ABI, PP_CA);
 
 /////////////////////////////////////////
 ////// tool function ///////////////////
 /////////////////////////////////////////
 
-async function _createVaultAccounts(assetId, vaultAccountNamePrefix) {
-  let vaultRes;
-  let vault;
-  let vaultWallet;
+async function _permitSpender(from_addr, token_addr, amount) {
+  // permitSpender -----------------
+  const nonceStr = await token.methods.nonces(from_addr).call();
+  const nonce = parseInt(nonceStr);
 
-  vaultRes = await fireblocks.createVaultAccount(
-    vaultAccountNamePrefix.toString()
-  );
-  vault = {
-    vaultName: vaultRes.name,
-    vaultID: vaultRes.id,
-  };
-  vaultWallet = await fireblocks.createVaultAsset(
-    Number(vault.vaultID),
-    assetId
-  );
-  return { vault, vaultWallet };
-}
-
-async function _createVaultAsset(vaultId, assetId) {
-  const Res = await fireblocks.createVaultAsset(vaultId, assetId);
-  return Res;
-}
-
-async function createVault(assetId, accountName, tokenId) {
-  const { vault, vaultWallet } = await _createVaultAccounts(
-    assetId,
-    accountName
-  );
-  await _createVaultAsset(vault.vaultID, tokenId);
-
-  console.log(
-    `{vaultName: ${accountName}, vaultID: ${vault.vaultID}, address: ${vaultWallet.address}},`
-  );
-
-  resVault = {
-    vaultId: vault.vaultID,
-    name: accountName,
-    address: vaultWallet.address,
-  };
-
-  return resVault;
-}
-
-async function bulkInsertVault(vault) {
   const requestParam = {
-    vaultId: vault.vaultId,
-    name: vault.name,
-    address: vault.address,
+    DOMAIN_NAME: DOMAIN_NAME,
+    DOMAIN_VERSION: DOMAIN_VERSION,
+    DOMAIN_VERIFYINGCONTRACT: token_addr,
+    owner_addr: from_addr,
+    spender_addr: PP_CA,
+    value: amount,
+    nonce: nonce,
   };
-  console.log("bulkInsertVault:requestParam::", requestParam);
+
+  console.log("_permitSpender:requestParam::", requestParam);
 
   try {
-    const response = await axios.post(apiUrl_registVault, requestParam, {
+    const response = await axios.post(apiUrl_ERC2612Permit, requestParam, {
       headers: {
         "Content-Type": "application/json",
         "x-api-key": apiKey,
@@ -132,27 +104,16 @@ async function bulkInsertVault(vault) {
   }
 }
 
-async function mintToken(target_addr, amount) {
-  // from address (minter address)
-  const source = target_addr;
-  const minerIndex = parseInt(source.slice(-1), 16) % 8;
-  const from_addr = minters[minerIndex].address;
+async function _deposit(from_addr, po_addr, token_addr, amount) {
+  // deposit -----------------
+  const data = token.methods.depositTokens(token_addr, amount, po_addr);
 
-  // to address (token address)
-  const to_addr = TOKEN_CA;
-
-  // data
-  const weiAmount = web3_alchemy.utils.toWei(amount.toString(), "ether");
-  const data = token.methods.mint(target_addr, weiAmount);
-
-  // set request param
   const requestParam = {
     from_addr: from_addr,
-    to_addr: to_addr,
+    to_addr: PP_CA,
     data: data.encodeABI(),
   };
-
-  console.log("mintToken:requestParam::", requestParam);
+  console.log("_deposit:requestParam::", requestParam);
 
   try {
     const response = await axios.post(apiUrl_ERC2771, requestParam, {
@@ -180,29 +141,19 @@ async function sleepForSeconds(amount) {
 ////// public functions /////////////////
 /////////////////////////////////////////
 
-async function createVaultAndMint(cardId, name) {
-  // step 1-1A : create vault
-  console.log(
-    "step 1-1A : create vault--------------------------------------------"
-  );
-  const resVault = await createVault(BASE_ASSET_ID, name, TOKEN_ASSET_ID);
-  console.log("createVaultAndMint:resVault::", resVault);
+async function Deposit(cardId, from_addr, po_addr, token_addr, amount) {
+  // step 1-1A : search from_addr
+
+  // step 1-1B : permitSpender
+  console.log("step 1-1B : permitSpender-------------------------");
+  const resApi1B = await _permitSpender(from_addr, token_addr, amount);
+  console.log("Deposit:permitSpender::", resApi1B);
   await sleepForSeconds(4);
 
-  // step 1-1B : vaults bulk insert
-  console.log(
-    "step 1-1B : vaults bulk insert--------------------------------------"
-  );
-  const resInsert = await bulkInsertVault(resVault);
-  console.log("createVaultAndMint:resInsert::", resInsert.data);
-  await sleepForSeconds(4);
-
-  // step 1-1C : mint token
-  console.log(
-    "step 1-1C : mint token----------------------------------------------"
-  );
-  const resApi = await mintToken(resVault.address, 1000);
-  console.log("createVaultAndMint:resApi::", resApi.data);
+  // step 1-1C : deposit
+  console.log("step 1-1C : deposit-------------------------------");
+  const resApi1C = await _deposit(from_addr, po_addr, token_addr, amount);
+  console.log("Deposit:deposit::", resApi1C);
   await sleepForSeconds(2);
 }
 
@@ -211,7 +162,13 @@ async function createVaultAndMint(cardId, name) {
 /////////////////////////////////////////
 
 (async () => {
-  await createVaultAndMint("id-123456789", "testName0008");
+  await Deposit({
+    cardId: "id-123456789",
+    from_addr: null,
+    park_addr: PO_ADDR,
+    token_addr: TOKEN_CA,
+    amount: "1000000000000000000000",
+  });
 
   console.log("Done!");
 })().catch((e) => {
