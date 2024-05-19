@@ -64,6 +64,7 @@ const fireblocks = new FireblocksSDK(fb_apiSecret, fb_apiKey, fb_base_url);
 const alchemyHTTPS = process.env.ALCHEMY_HTTPS;
 const web3_alchemy = createAlchemyWeb3(alchemyHTTPS);
 const token = new web3_alchemy.eth.Contract(TOKEN_ABI, TOKEN_CA);
+const registry = new web3_alchemy.eth.Contract(REGISTRY_ABI, REGISTRY_CA);
 
 /////////////////////////////////////////
 ////// tool function ///////////////////
