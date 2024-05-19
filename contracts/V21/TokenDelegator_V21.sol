@@ -62,4 +62,39 @@ contract TokenDelegator is ReentrancyGuard {
             "Transfer failed"
         );
     }
+
+    /**
+     * @dev Function to delegate and transfer tokens
+     * @param tokenAddress The address of the token
+     * @param owner The address of the token owner
+     * @param spender The address allowed to transfer tokens
+     * @param amount The amount of tokens to be transferred
+     * @param deadline The timestamp until which this operation is valid
+     * @param v The recovery byte of the signature
+     * @param r Half of the ECDSA signature pair
+     * @param s Half of the ECDSA signature pair
+     */
+    function permitSpender(
+        address tokenAddress,
+        address owner,
+        address spender,
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public nonReentrant {
+        require(tokenAddress != address(0), "Invalid token address");
+        require(owner != address(0), "Invalid owner address");
+        require(spender != address(0), "Spender address cannot be zero");
+        require(amount > 0, "Amount must be greater than zero");
+        require(deadline > block.timestamp, "Deadline has passed");
+        require(msg.sender != owner, "Sender must be different from owner"); 
+        require(msg.sender != spender, "Sender must be different from spender");
+
+        // Call permit to allow this contract to spend the tokens on behalf of the owner
+        IERC20Permit(tokenAddress).permit(owner, spender, amount, deadline, v, r, s);
+    }
+
+
 }
