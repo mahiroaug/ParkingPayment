@@ -286,13 +286,13 @@ async function Deposit(requsetParam) {
   console.log("Deposit::PP_CA::", PP_CA, "--->>>Get Balance");
   await getAccountBalance(PP_CA);
   await getAllowance(from_addr, PP_CA);
-
+  /*
   // step 1-1B : permitSpender
   console.log("step 1-1B : permitSpender-------------------------");
   const resApi1B = await _permitSpender(from_addr, token_addr, amount);
   console.log("Deposit:permitSpender:: PASS");
   await sleepForSeconds(20);
-
+*/
   // step 1-1C : deposit
   console.log("step 1-1C : deposit-------------------------------");
   const resApi1C = await _deposit(from_addr, park_addr, token_addr, amount);
@@ -315,7 +315,7 @@ async function Deposit(requsetParam) {
   const weiAmount = await web3_alchemy.utils.toWei(amount.toString(), "ether");
 
   await Deposit({
-    cardId: "id-123456789",
+    cardId: "id-1114",
     park_addr: PO_ADDR,
     token_addr: TOKEN_CA,
     amount: weiAmount,

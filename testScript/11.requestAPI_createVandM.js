@@ -266,6 +266,7 @@ async function getAddressByCardId(cardId) {
       `getAddressByCardId::registry.methods.getId : cardId=${cardId}`
     );
     const result = await registry_alc.methods.getMapAddress(cardId).call();
+    //const result = await registry.methods.idMap(cardId).call();
     console.log(`result type: ${typeof result}`);
     console.log(`getAddressByCardId::result::`, result);
 
@@ -286,7 +287,6 @@ async function sleepForSeconds(amount) {
 /////////////////////////////////////////
 
 async function createVaultAndMint(cardId, name) {
-  /*
   // step 1-1A : create vault
   console.log(
     "step 1-1A : create vault--------------------------------------------"
@@ -318,7 +318,7 @@ async function createVaultAndMint(cardId, name) {
   const resTx = await registCardId(cardId, resVault.address);
   console.log("createVaultAndMint:resTx:: PASS");
   await sleepForSeconds(0.2);
-*/
+
   // step 1-1E : check registry
   console.log(
     "step 1-1E : check registry-----------------------------------------"
@@ -333,7 +333,7 @@ async function createVaultAndMint(cardId, name) {
 /////////////////////////////////////////
 
 (async () => {
-  await createVaultAndMint("id-1112", "testName0012");
+  await createVaultAndMint("id-1114", "testName0014");
 
   console.log("Done!");
 })().catch((e) => {
