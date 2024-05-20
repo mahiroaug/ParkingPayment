@@ -1,0 +1,133 @@
+require("dotenv").config({ path: ".env" });
+
+const fs = require("fs");
+const path = require("path");
+const { Web3 } = require("web3");
+//const { inspect } = require('util');
+const {
+  FireblocksSDK,
+  PeerType,
+  TransactionOperation,
+  TransactionStatus,
+} = require("fireblocks-sdk");
+const {
+  FireblocksWeb3Provider,
+  ChainId,
+} = require("@fireblocks/fireblocks-web3-provider");
+//const { sign } = require('crypto');
+const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
+
+// -------------------COMMON----------------------- //
+//// common environment
+
+const vaultsRaw = require("../.env.vaults");
+const { exit } = require("process");
+const minters = vaultsRaw.minters;
+
+const chainId = ChainId.POLYGON_AMOY; // Polygon Testnet(amoy)
+const rpcUrl = process.env.POLYGON_RPC_URL;
+const EXPLOERE = process.env.EXPLOERE;
+
+//// token
+const TOKEN_CA = process.env.TOKENPROXY_CA;
+const TOKEN_ABI =
+  require("../artifacts/contracts/V21/JST_V21.sol/JST_V21.json").abi;
+
+//// parking payment
+const PP_CA = process.env.PARKINGPAYMENTPROXY_CA;
+const PP_ABI =
+  require("../artifacts/contracts/ParkingPayment/ParkingPayment.sol/ParkingPayment.json").abi;
+const PO_ADDR = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_PARKOWNER_ADDR;
+
+// -------------------FIREBLOCKS------------------- //
+//// fireblocks - SDK
+const fb_apiSecret = fs.readFileSync(
+  path.resolve("fireblocks_secret_SIGNER.key"),
+  "utf8"
+);
+const fb_apiKey = process.env.FIREBLOCKS_API_KEY_SIGNER;
+const fb_base_url = process.env.FIREBLOCKS_URL;
+const fireblocks = new FireblocksSDK(fb_apiSecret, fb_apiKey, fb_base_url);
+const assetId = process.env.FIREBLOCKS_ASSET_ID;
+
+//// fireblocks - web3 provider - signer account
+const CO_ADDR = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_CONTRACTOWNER_ADDR;
+const fb_vaultId = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_CONTRACTOWNER;
+const eip1193Provider = new FireblocksWeb3Provider({
+  privateKey: fb_apiSecret,
+  apiKey: fb_apiKey,
+  vaultAccountIds: fb_vaultId,
+  chainId: chainId,
+  rpcUrl: rpcUrl,
+});
+const web3 = new Web3(eip1193Provider);
+
+//// alchemy
+const alchemyHTTPS = process.env.ALCHEMY_HTTPS;
+const web3_alchemy = createAlchemyWeb3(alchemyHTTPS);
+const parkingPayment_alc = new web3_alchemy.eth.Contract(PP_ABI, PP_CA);
+
+/////////////////////////////////////////
+////// send functions ///////////////////
+/////////////////////////////////////////
+
+const sendTx = async (_to, _tx, _signer, _gasLimit) => {
+  // check toAddress
+  const toAddress = web3_alchemy.utils.toChecksumAddress(_to);
+  console.log(" toAddress:", toAddress);
+
+  // gasLimit
+  const setGasLimit = _gasLimit;
+  console.log(" setGasLimit:", setGasLimit);
+
+  // gasPrice
+  const gasPrice = await web3_alchemy.eth.getGasPrice();
+  const gasPriceInGwei = await web3_alchemy.utils.fromWei(gasPrice, "gwei");
+  console.log(" gasPrice:", gasPrice, "(", gasPriceInGwei, "Gwei)");
+
+  // estimate max Transaction Fee
+  const estimateMaxTxFee = setGasLimit * gasPrice;
+  const estimateMaxTxFeeETH = await web3_alchemy.utils.fromWei(
+    estimateMaxTxFee.toString(),
+    "ether"
+  );
+  console.log(
+    ` estimate MAX Tx Fee:${estimateMaxTxFee} (${estimateMaxTxFeeETH} ${assetId})`
+  );
+
+  // gasHex
+  const gasHex = await web3_alchemy.utils.toHex(setGasLimit);
+  console.log(` gasHex: ${gasHex}`);
+
+  // dataABI
+  const dataABI = _tx.encodeABI();
+  console.log(`dataABI: ${dataABI}`);
+
+  const createReceipt = await web3.eth
+    .sendTransaction({
+      to: toAddress,
+      from: _signer,
+      data: dataABI,
+      gas: gasHex,
+    })
+    .once("transactionHash", (txhash) => {
+      console.log(` Send transaction ...`);
+      console.log(` ${EXPLOERE}/tx/${txhash}`);
+    });
+  console.log(
+    ` Tx successful with hash: ${createReceipt.transactionHash} in block ${createReceipt.blockNumber}`
+  );
+
+  return createReceipt;
+};
+
+/////////////////////////////////////////
+////// main functions ///////////////////
+/////////////////////////////////////////
+
+(async () => {
+  const tx = parkingPayment_alc.methods.addParkingOwner(PO_ADDR);
+  const receipt = await sendTx(PP_CA, tx, CO_ADDR, 2000000);
+})().catch((error) => {
+  console.log(error);
+});

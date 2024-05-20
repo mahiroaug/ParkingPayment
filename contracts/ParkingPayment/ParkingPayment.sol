@@ -2,10 +2,21 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 
-contract ParkingPayment is Ownable{
+contract ParkingPayment is 
+    Initializable,
+    OwnableUpgradeable, 
+    UUPSUpgradeable,  
+    ERC2771ContextUpgradeable 
+{
+
+    //----------------------------------------------------------------
+    // definition
+    //----------------------------------------------------------------
     uint256 public ratePerMinute;
     uint256 public WITHDRAWAL_DELAY;
     
@@ -21,14 +32,52 @@ contract ParkingPayment is Ownable{
         address tokenAddress;  // Token address used for payment
     }
 
-    constructor(address initialOwner, uint256 _ratePerMinute)
-        Ownable(initialOwner)
+
+    //----------------------------------------------------------------
+    // init
+    //----------------------------------------------------------------
+    // constructor
+    constructor(address trustedForwarder) 
+        ERC2771ContextUpgradeable(trustedForwarder)
+    {}
+
+    // initializer
+    function initialize(address initialOwner, uint256 _ratePerMinute)
+        public initializer
     {
+        OwnableUpgradeable.__Ownable_init(initialOwner);
+        UUPSUpgradeable.__UUPSUpgradeable_init();
+
         ratePerMinute = _ratePerMinute;
         //WITHDRAWAL_DELAY = 7 days;
         WITHDRAWAL_DELAY = 30 minutes;
     }
 
+
+    //----------------------------------------------------------------
+    // upgradable
+    //----------------------------------------------------------------
+    // updateToProxy
+    function _authorizeUpgrade(address newImplementation) internal onlyOwner override{}
+
+
+    //----------------------------------------------------------------
+    // ERC2771 forwarder
+    //----------------------------------------------------------------
+    function _msgSender() internal view virtual override(ERC2771ContextUpgradeable,ContextUpgradeable) returns (address sender) {
+        return ERC2771ContextUpgradeable._msgSender();
+    }
+    function _msgData() internal view virtual override(ERC2771ContextUpgradeable,ContextUpgradeable) returns (bytes calldata) {
+        return ERC2771ContextUpgradeable._msgData();
+    }
+    function _contextSuffixLength() internal view virtual override(ERC2771ContextUpgradeable, ContextUpgradeable) returns (uint256) {
+        return ERC2771ContextUpgradeable._contextSuffixLength();
+    }
+    
+
+    //----------------------------------------------------------------
+    // public function
+    //----------------------------------------------------------------
     function addParkingOwner(address _parkOwner) public onlyOwner {
         validParkingOwners[_parkOwner] = true;
     }
