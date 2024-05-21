@@ -1,15 +1,11 @@
 require("dotenv").config({ path: ".env" });
-const { ethers } = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 
 async function main() {
   const ServiceOwner =
     process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR;
 
   const FORWARDER_CA = process.env.FORWARDER_CA;
-
-  let parkingPayment;
-  let erc1967Proxy;
-  let ParkingPayment_Proxy;
 
   //-----------------------------------------------------------------
   // ParkingPayment
@@ -18,42 +14,33 @@ async function main() {
     "contracts/ParkingPayment/ParkingPayment.sol:ParkingPayment"
   );
 
-  // deploy
-  parkingPayment = await ParkingPayment.deploy(FORWARDER_CA); // trusted forwarder
-  await parkingPayment.waitForDeployment();
-  console.log("parkingPayment addr = ", parkingPayment.target);
-
   //-----------------------------------------------------------------
   // ERC1967 Proxy
   //-----------------------------------------------------------------
-
-  // initializer
   const etherString = "2";
   weiPerMinute = await ethers.parseEther(etherString);
-  const data = ParkingPayment.interface.encodeFunctionData("initialize", [
-    ServiceOwner,
-    weiPerMinute,
-  ]);
 
-  // Deploy ERC1967 Proxy
-  const ERC1967Proxy = await hre.ethers.getContractFactory("ERC1967Proxy");
-  erc1967Proxy = await ERC1967Proxy.deploy(parkingPayment.target, data);
-  await erc1967Proxy.waitForDeployment();
-  console.log("erc1967Proxy addr = ", erc1967Proxy.target);
-
-  // check
-  ParkingPayment_Proxy = await ethers.getContractAt(
-    "ParkingPayment",
-    erc1967Proxy.target
+  console.log("Deploying ParkingPayment...");
+  const parkingPayment_Proxy = await upgrades.deployProxy(
+    ParkingPayment,
+    [ServiceOwner, weiPerMinute],
+    {
+      initializer: "initialize",
+      constructorArgs: [FORWARDER_CA],
+      kind: "uups",
+    }
   );
-  console.log("ParkingPayment_Proxy address = ", ParkingPayment_Proxy.target);
+  await parkingPayment_Proxy.waitForDeployment();
+  console.log("parkingPayment addr = ", parkingPayment_Proxy.target);
 
   // check
-  const ratePerMinute = await ParkingPayment_Proxy.ratePerMinute();
+  const ratePerMinute = await parkingPayment_Proxy.ratePerMinute();
   console.log(
     "ParkingPayment_Proxy ratePerMinute = ",
     ratePerMinute.toString()
   );
+  const trustedForwarder = await parkingPayment_Proxy.trustedForwarder();
+  console.log("ParkingPayment_Proxy trustedForwarder = ", trustedForwarder);
 }
 
 main()

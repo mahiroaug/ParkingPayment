@@ -2,29 +2,70 @@ require("dotenv").config({ path: ".env" });
 const { ethers, upgrades } = require("hardhat");
 
 async function main() {
-  const PROXY_ADDRESS = process.env.PROXY_ADDRESS;
+  const PARKINGPAYMENTPROXY_CA = process.env.PARKINGPAYMENTPROXY_CA;
+  const FORWARDER_CA = process.env.FORWARDER_CA;
 
-  // ParkingPaymentの新しいバージョンをデプロイ
-  const ParkingPaymentV2 = await ethers.getContractFactory(
-    "contracts/ParkingPayment/ParkingPaymentV2.sol:ParkingPaymentV2"
-  );
+  console.log("current PARKINGPAYMENTPROXY_CA = ", PARKINGPAYMENTPROXY_CA);
+  console.log("current FORWARDER_CA           = ", FORWARDER_CA);
+
+  const ServiceOwner =
+    process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR;
+
+  //-----------------------------------------------------------------
+  // ParkingPayment
+  //-----------------------------------------------------------------
   console.log("Deploying ParkingPaymentV2...");
-  const parkingPaymentV2 = await ParkingPaymentV2.deploy();
-  await parkingPaymentV2.deployed();
-  console.log("ParkingPaymentV2 deployed to:", parkingPaymentV2.address);
+  const ParkingPaymentV2 = await ethers.getContractFactory(
+    "contracts/ParkingPayment/ParkingPaymentV2.sol:ParkingPayment"
+  );
 
-  // プロキシをアップグレード
-  console.log("Upgrading ParkingPayment proxy...");
-  const parkingPaymentProxy = await ethers.getContractAt(
-    "ParkingPaymentV2",
-    PROXY_ADDRESS
+  //-----------------------------------------------------------------
+  // ERC1967 Proxy
+  //-----------------------------------------------------------------
+  const etherString = "1";
+  weiPerMinute = await ethers.parseEther(etherString);
+
+  const parkingPayment_Proxy = await upgrades.upgradeProxy(
+    PARKINGPAYMENTPROXY_CA,
+    ParkingPaymentV2,
+    {
+      constructorArgs: [FORWARDER_CA],
+      kind: "uups",
+    }
   );
-  const upgradeTx = await upgrades.upgradeProxy(
-    parkingPaymentProxy.address,
-    ParkingPaymentV2
+  await parkingPayment_Proxy.waitForDeployment();
+  console.log("parkingPayment addr = ", parkingPayment_Proxy.target);
+
+  // check
+  const ratePerMinute = await parkingPayment_Proxy.ratePerMinute();
+  console.log(
+    "ParkingPayment_Proxy ratePerMinute = ",
+    ratePerMinute.toString()
   );
-  await upgradeTx.wait();
-  console.log("ParkingPayment proxy upgraded");
+  const trustedForwarder = await parkingPayment_Proxy.trustedForwarder();
+  console.log("ParkingPayment_Proxy trustedForwarder = ", trustedForwarder);
+
+  //-----------------------------------------------------------------
+  // TEST:: setWithdrawalDelay
+  //-----------------------------------------------------------------
+
+  /*
+  const parkingPayment_Proxy = await ethers.getContractAt(
+    "contracts/ParkingPayment/ParkingPaymentV2.sol:ParkingPayment",
+    PARKINGPAYMENTPROXY_CA
+  );
+  */
+
+  console.log("TEST:: Setting WITHDRAWAL_DELAY to 1 hour...");
+
+  const currentWithdrawalDelay = await parkingPayment_Proxy.WITHDRAWAL_DELAY();
+  console.log("Current WITHDRAWAL_DELAY = ", currentWithdrawalDelay.toString());
+
+  await parkingPayment_Proxy.setWithdrawalDelay(3600).then((tx) => tx.wait());
+  console.log("WITHDRAWAL_DELAY set to 1 hour");
+
+  const newWithdrawalDelay = await parkingPayment_Proxy.WITHDRAWAL_DELAY();
+  console.log("New WITHDRAWAL_DELAY = ", newWithdrawalDelay.toString());
 }
 
 main()

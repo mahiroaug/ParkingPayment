@@ -96,24 +96,27 @@ contract ParkingPayment is
         require(tokenAddress != address(0), "Token address cannot be zero.");
         require(validParkingOwners[parkingOwner], "Parking owner is not registered.");
 
+        address sender = _msgSender();
         IERC20 token = IERC20(tokenAddress);
         // need allowance
-        bool sent = token.transferFrom(msg.sender, address(this), amount);
+        bool sent = token.transferFrom(sender, address(this), amount);
         require(sent, "Token transfer failed.");
 
         // record deposit and designated owner
-        deposits[msg.sender][tokenAddress] += amount;
-        designatedOwner[msg.sender] = parkingOwner;
+        deposits[sender][tokenAddress] += amount;
+        designatedOwner[sender] = parkingOwner;
 
-        emit DepositMade(msg.sender, tokenAddress, amount, parkingOwner);
+        emit DepositMade(sender, tokenAddress, amount, parkingOwner);
     }
 
     // Function to record a parking entry
     function recordEntry(address userAddress, address tokenAddress) public {
+        address sender = _msgSender();
+
         require(userAddress != address(0), "User address cannot be zero.");
         require(tokenAddress != address(0), "Token address cannot be zero.");
-        require(validParkingOwners[msg.sender], "Only valid parking owners can record entry.");
-        require(msg.sender == designatedOwner[userAddress], "Only designated parking owner can record entry.");
+        require(validParkingOwners[sender], "Only valid parking owners can record entry.");
+        require(sender == designatedOwner[userAddress], "Only designated parking owner can record entry.");
         require(deposits[userAddress][tokenAddress] > 0, "No deposits found for given token and user.");
         require(!parkingStatus[userAddress].isParked, "User already parked.");
 
@@ -130,7 +133,7 @@ contract ParkingPayment is
     // Function to record a parking exit and handle payment
     function recordExit(address userAddress) public {
         require(userAddress != address(0), "User address cannot be zero.");
-        require(msg.sender == designatedOwner[userAddress], "Only designated parking owner can record exit.");
+        require(_msgSender() == designatedOwner[userAddress], "Only designated parking owner can record exit.");
         require(parkingStatus[userAddress].isParked, "User is not currently parked.");
 
         // Calculate parked minutes based on current time and recorded entry time
@@ -169,11 +172,13 @@ contract ParkingPayment is
 
     // Function to allow users or contract owner to withdraw their remaining deposit funds after the parking period and required delay
     function withdrawRemainingFunds(address userAddress, address tokenAddress) public {
+        address sender = _msgSender();
+
         require(userAddress != address(0), "User address cannot be zero.");
         require(tokenAddress != address(0), "Token address cannot be zero.");
         require(deposits[userAddress][tokenAddress] > 0, "No remaining funds to withdraw.");
-        require(msg.sender == userAddress || msg.sender == owner(), "Only the user or the contract owner can perform this action.");
-        if (msg.sender == userAddress) {
+        require(sender == userAddress || sender == owner(), "Only the user or the contract owner can perform this action.");
+        if (sender == userAddress) {
             require(block.timestamp >= parkingStatus[userAddress].entryTime + WITHDRAWAL_DELAY, "Cannot withdraw before delay period.");
         }
          
@@ -203,6 +208,14 @@ contract ParkingPayment is
     function calculateFee(uint256 useMinutes) private view returns (uint256) {
         return useMinutes * ratePerMinute;
     }
+
+    /// @notice Change the withdrawal delay period
+    /// @param newDelay New delay time in seconds
+    function setWithdrawalDelay(uint256 newDelay) public onlyOwner {
+        WITHDRAWAL_DELAY = newDelay;
+    }
+
+
 
     // event declarations
     event DepositMade(address indexed user, address indexed tokenAddress, uint256 amount, address parkingOwner);

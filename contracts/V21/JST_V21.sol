@@ -29,15 +29,15 @@ contract JST_V21 is
     //----------------------------------------------------------------
     // init
     //----------------------------------------------------------------
-    // constructor
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address trustedForwarder) 
         ERC2771ContextUpgradeable(trustedForwarder)
     {}
 
     // initializer
     function initialize(address initialOwner) public initializer {
-        ERC20Upgradeable.__ERC20_init("ParkPayCoinV1", "PPC");
-        ERC20PermitUpgradeable.__ERC20Permit_init("ParkPayCoinV1");
+        ERC20Upgradeable.__ERC20_init("ParkPayCoinV2", "PPC");
+        ERC20PermitUpgradeable.__ERC20Permit_init("ParkPayCoinV2");
         OwnableUpgradeable.__Ownable_init(initialOwner);
         UUPSUpgradeable.__UUPSUpgradeable_init();
 

@@ -286,18 +286,18 @@ async function Deposit(requsetParam) {
   console.log("Deposit::PP_CA::", PP_CA, "--->>>Get Balance");
   await getAccountBalance(PP_CA);
   await getAllowance(from_addr, PP_CA);
-  /*
+
   // step 1-1B : permitSpender
   console.log("step 1-1B : permitSpender-------------------------");
   const resApi1B = await _permitSpender(from_addr, token_addr, amount);
   console.log("Deposit:permitSpender:: PASS");
-  await sleepForSeconds(20);
-*/
+  await sleepForSeconds(30);
+
   // step 1-1C : deposit
   console.log("step 1-1C : deposit-------------------------------");
   const resApi1C = await _deposit(from_addr, park_addr, token_addr, amount);
   console.log("Deposit:deposit:: PASS");
-  await sleepForSeconds(20);
+  await sleepForSeconds(30);
 
   console.log("Deposit::from_addr::", from_addr, "--->>>Get Balance");
   await getAccountBalance(from_addr);

@@ -1,57 +1,66 @@
 require("dotenv").config({ path: ".env" });
-const hre = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 
 async function main() {
   const TokenOwner = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_CONTRACTOWNER_ADDR;
-
   const domainName = process.env.DOMAIN_SEPARATOR_PARAM_NAME;
   const domainVersion = process.env.DOMAIN_SEPARATOR_PARAM_VERSION;
 
-  let forwarder;
-  let token;
-  let erc1967Proxy;
-  let delegator;
-  let JST_V21_Proxy;
+  console.log("TokenOwner address = ", TokenOwner);
+  console.log("domainName =         ", domainName);
+  console.log("domainVersion =      ", domainVersion);
 
-  console.log("TokenOwner address =      ", TokenOwner);
+  //const FORWARDER_CA = process.env.FORWARDER_CA;
 
-  // Deploy TokenDelegator
+  //-----------------------------------------------------------------
+  // TokenDelegator
+  //-----------------------------------------------------------------
   const DelegatorFactory = await ethers.getContractFactory(
     "contracts/V21/TokenDelegator_V21.sol:TokenDelegator"
   );
-  delegator = await DelegatorFactory.deploy();
+  const delegator = await DelegatorFactory.deploy();
   await delegator.waitForDeployment();
   console.log("delegator deployed to:    ", delegator.target);
 
-  // Deploy forwarder
-  const Forwarder = await hre.ethers.getContractFactory(
+  //-----------------------------------------------------------------
+  // Forwarder
+  //-----------------------------------------------------------------
+  const Forwarder = await ethers.getContractFactory(
     "contracts/V21/Forwarder_V21.sol:Forwarder"
   );
-  forwarder = await Forwarder.deploy();
+  const forwarder = await Forwarder.deploy();
   await forwarder.waitForDeployment();
   console.log("Forwarder deployed to:    ", forwarder.target);
   const tx = await forwarder.registerDomainSeparator(domainName, domainVersion);
   await tx.wait();
   console.log("DomainSeparator registered");
 
-  // Deploy JSTv2_Token
-  const ImplementContract = await ethers.getContractFactory("JST_V21");
-  token = await ImplementContract.deploy(forwarder.target);
-  await token.waitForDeployment();
-  console.log("token deployed to:        ", token.target);
+  // set FORWARDER_CA
+  const FORWARDER_CA = forwarder.target;
 
-  // Deploy ERC1967 Proxy
-  const ERC1967Proxy = await hre.ethers.getContractFactory("ERC1967Proxy");
-  const data = ImplementContract.interface.encodeFunctionData("initialize", [
-    TokenOwner,
-  ]);
-  erc1967Proxy = await ERC1967Proxy.deploy(token.target, data);
-  await erc1967Proxy.waitForDeployment();
-  console.log("erc1967Proxy deployed to: ", erc1967Proxy.target);
-  JST_V21_Proxy = await ethers.getContractAt("JST_V21", erc1967Proxy.target);
-  console.log("token Proxy address =   ", JST_V21_Proxy.target);
+  //-----------------------------------------------------------------
+  // JSTv21_Token
+  //-----------------------------------------------------------------
+  const Token = await ethers.getContractFactory(
+    "contracts/V21/JST_V21.sol:JST_V21"
+  );
 
-  const x = await JST_V21_Proxy.balanceOf(TokenOwner);
+  //-----------------------------------------------------------------
+  // ERC1967 Proxy
+  //-----------------------------------------------------------------
+  console.log("Deploying Token...");
+  const token_Proxy = await upgrades.deployProxy(Token, [TokenOwner], {
+    initializer: "initialize",
+    constructorArgs: [FORWARDER_CA],
+    kind: "uups",
+  });
+  await token_Proxy.waitForDeployment();
+  console.log("token addr = ", token_Proxy.target);
+
+  // check
+  const trustedForwarder = await token_Proxy.trustedForwarder();
+  console.log("Token_Proxy trustedForwarder = ", trustedForwarder);
+  const x = await token_Proxy.balanceOf(TokenOwner);
   console.log("initial TokenOwner balance is ", x.toString());
 }
 
