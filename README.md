@@ -15,7 +15,7 @@
   - [3.2. Token](#32-token)
   - [3.3. Polygonscan verify](#33-polygonscan-verify)
 - [4. cdk](#4-cdk)
-- [API test](#api-test)
+- [5. API test](#5-api-test)
 
 # 1. スマ婚要件
 
@@ -284,7 +284,7 @@ npx projen deploy
 
 ```
 
-# API test
+# 5. API test
 
 ```bash
 curl -w "\n%{http_code}\n" \
