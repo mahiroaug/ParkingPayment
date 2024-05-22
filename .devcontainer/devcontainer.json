@@ -36,7 +36,9 @@
         "dbaeumer.vscode-eslint",
         "mermade.openapi-lint",
         "TakumiI.markdowntable",
-        "NomicFoundation.hardhat-solidity"
+        "NomicFoundation.hardhat-solidity",
+        "bierner.markdown-mermaid",
+        "bpruitt-goddard.mermaid-markdown-syntax-highlighting"
       ]
     }
   }
