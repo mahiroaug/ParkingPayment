@@ -16,6 +16,8 @@
   - [3.3. Polygonscan verify](#33-polygonscan-verify)
 - [4. cdk](#4-cdk)
 - [5. API test](#5-api-test)
+  - [5.1. STEP1 Create Vault and Mint](#51-step1-create-vault-and-mint)
+  - [5.2. STEP2 Deposit](#52-step2-deposit)
 
 # 1. スマ婚要件
 
@@ -286,24 +288,55 @@ npx projen deploy
 
 # 5. API test
 
+## 5.1. STEP1 Create Vault and Mint
+
 ```bash
+
+## request
 curl -w "\n%{http_code}\n" \
 -X POST https://**********.execute-api.ap-northeast-1.amazonaws.com/v1/CreateVandM \
 -H "Content-Type: application/json" \
 -H "x-api-key: <YOUR_API_KEY>" \
 -d '{
-    "cardId": "id-2111",
-    "name": "testName2111"
-}'
+    "cardId": "id-2115",
+    "name": "testName2115"
+    }'
+
+## response
+{
+  "message":"request is received",
+  "result":{
+    "cardId":"id-2115",
+    "name":"testName2115",
+    "vaultId":"263",
+    "address":"0x64C606266732d51244cC23c86DCFE438b10EEF97",
+    "queue":"0505b435-fa8d-41d9-be9f-d630998038eb"
+  }
+}
+201
 ```
 
+## 5.2. STEP2 Deposit
+
 ```bash
+
+## request
 curl -w "\n%{http_code}\n" \
 -X POST https://**********.execute-api.ap-northeast-1.amazonaws.com/v1/Deposit \
 -H "Content-Type: application/json" \
 -H "x-api-key: <YOUR_API_KEY>" \
 -d '{
-    "cardId": "id-2111"
-}'
+    "cardId": "id-2115"
+    }'
 
+## response
+{
+  "message":"request is received",
+  "result":{
+    "cardId":"id-2115",
+    "from_addr":"0x64C606266732d51244cC23c86DCFE438b10EEF97",
+    "queue":"537edb61-83ee-479f-93f5-5aee07ca4818"
+  }
+}
+201
 ```
