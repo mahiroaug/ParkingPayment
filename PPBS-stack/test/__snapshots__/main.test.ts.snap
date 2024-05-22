@@ -1,0 +1,1858 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Snapshot 1`] = `
+{
+  "Outputs": {
+    "ApiUrl": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "PPBSAPI0E3DAE71",
+            },
+            ".execute-api.",
+            {
+              "Ref": "AWS::Region",
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "PPBSAPIDeploymentStagev1E014C5FB",
+            },
+            "/",
+          ],
+        ],
+      },
+    },
+    "CMD1xQueueUrl": {
+      "Value": {
+        "Ref": "CMD1xQueue25886369",
+      },
+    },
+    "CMD2xQueueUrl": {
+      "Value": {
+        "Ref": "CMD2xQueue9DE094EC",
+      },
+    },
+    "Output": {
+      "Value": {
+        "Ref": "VPCB9E5F0B4",
+      },
+    },
+    "PPBSAPIEndpoint6A5A83BE": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "PPBSAPI0E3DAE71",
+            },
+            ".execute-api.",
+            {
+              "Ref": "AWS::Region",
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+            "/",
+            {
+              "Ref": "PPBSAPIDeploymentStagev1E014C5FB",
+            },
+            "/",
+          ],
+        ],
+      },
+    },
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "CMD1xQueue25886369": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "ContentBasedDeduplication": true,
+        "DeduplicationScope": "messageGroup",
+        "FifoQueue": true,
+        "FifoThroughputLimit": "perMessageGroupId",
+        "MessageRetentionPeriod": 1800,
+        "VisibilityTimeout": 120,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CMD2xQueue9DE094EC": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "ContentBasedDeduplication": true,
+        "DeduplicationScope": "messageGroup",
+        "FifoQueue": true,
+        "FifoThroughputLimit": "perMessageGroupId",
+        "MessageRetentionPeriod": 1800,
+        "VisibilityTimeout": 120,
+      },
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "LambdaSecurityGroup0BD9FC99": {
+      "Properties": {
+        "GroupDescription": "Allow all outbound and inbound traffic for Lambda function",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "from 0.0.0.0/0:ALL TRAFFIC",
+            "IpProtocol": "-1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VPCB9E5F0B4",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "PPBSAPI0E3DAE71": {
+      "Properties": {
+        "Description": "Park Payment Back APIs",
+        "EndpointConfiguration": {
+          "Types": [
+            "REGIONAL",
+          ],
+        },
+        "Name": "PPBS-APIs-PAMOY",
+      },
+      "Type": "AWS::ApiGateway::RestApi",
+    },
+    "PPBSAPIAccount28A982D8": {
+      "DeletionPolicy": "Retain",
+      "DependsOn": [
+        "PPBSAPI0E3DAE71",
+      ],
+      "Properties": {
+        "CloudWatchRoleArn": {
+          "Fn::GetAtt": [
+            "PPBSAPICloudWatchRoleE88D049A",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::ApiGateway::Account",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "PPBSAPIApiKey3635F8B3": {
+      "Properties": {
+        "Enabled": true,
+        "StageKeys": [
+          {
+            "RestApiId": {
+              "Ref": "PPBSAPI0E3DAE71",
+            },
+            "StageName": {
+              "Ref": "PPBSAPIDeploymentStagev1E014C5FB",
+            },
+          },
+        ],
+      },
+      "Type": "AWS::ApiGateway::ApiKey",
+    },
+    "PPBSAPICloudWatchRoleE88D049A": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "apigateway.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "PPBSAPICreateVandM290BBCD2": {
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "PPBSAPI0E3DAE71",
+            "RootResourceId",
+          ],
+        },
+        "PathPart": "CreateVandM",
+        "RestApiId": {
+          "Ref": "PPBSAPI0E3DAE71",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "PPBSAPICreateVandMPOST51BC3847": {
+      "Properties": {
+        "ApiKeyRequired": true,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "POST",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region",
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "lambda11BackMaster89652D3B",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "ResourceId": {
+          "Ref": "PPBSAPICreateVandM290BBCD2",
+        },
+        "RestApiId": {
+          "Ref": "PPBSAPI0E3DAE71",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "PPBSAPICreateVandMPOSTApiPermissionTesttestPPBSAPI7E48DA13POSTCreateVandMC9D66A01": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "lambda11BackMaster89652D3B",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region",
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId",
+              },
+              ":",
+              {
+                "Ref": "PPBSAPI0E3DAE71",
+              },
+              "/test-invoke-stage/POST/CreateVandM",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "PPBSAPICreateVandMPOSTApiPermissiontestPPBSAPI7E48DA13POSTCreateVandMA466D758": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "lambda11BackMaster89652D3B",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region",
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId",
+              },
+              ":",
+              {
+                "Ref": "PPBSAPI0E3DAE71",
+              },
+              "/",
+              {
+                "Ref": "PPBSAPIDeploymentStagev1E014C5FB",
+              },
+              "/POST/CreateVandM",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "PPBSAPIDeployment40904DE4aea674ad549cdff4c91ac2f4b348b21f": {
+      "DependsOn": [
+        "PPBSAPICreateVandMPOST51BC3847",
+        "PPBSAPICreateVandM290BBCD2",
+        "PPBSAPIDepositPOSTB646EF75",
+        "PPBSAPIDepositB71AD248",
+      ],
+      "Properties": {
+        "Description": "Park Payment Back APIs",
+        "RestApiId": {
+          "Ref": "PPBSAPI0E3DAE71",
+        },
+      },
+      "Type": "AWS::ApiGateway::Deployment",
+    },
+    "PPBSAPIDeploymentStagev1E014C5FB": {
+      "DependsOn": [
+        "PPBSAPIAccount28A982D8",
+      ],
+      "Properties": {
+        "DeploymentId": {
+          "Ref": "PPBSAPIDeployment40904DE4aea674ad549cdff4c91ac2f4b348b21f",
+        },
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": true,
+            "HttpMethod": "*",
+            "LoggingLevel": "INFO",
+            "ResourcePath": "/*",
+          },
+        ],
+        "RestApiId": {
+          "Ref": "PPBSAPI0E3DAE71",
+        },
+        "StageName": "v1",
+      },
+      "Type": "AWS::ApiGateway::Stage",
+    },
+    "PPBSAPIDepositB71AD248": {
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "PPBSAPI0E3DAE71",
+            "RootResourceId",
+          ],
+        },
+        "PathPart": "Deposit",
+        "RestApiId": {
+          "Ref": "PPBSAPI0E3DAE71",
+        },
+      },
+      "Type": "AWS::ApiGateway::Resource",
+    },
+    "PPBSAPIDepositPOSTApiPermissionTesttestPPBSAPI7E48DA13POSTDeposit37426E6E": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "lambda21DepositMasterBFDCB176",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region",
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId",
+              },
+              ":",
+              {
+                "Ref": "PPBSAPI0E3DAE71",
+              },
+              "/test-invoke-stage/POST/Deposit",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "PPBSAPIDepositPOSTApiPermissiontestPPBSAPI7E48DA13POSTDeposit6ABD5E89": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "lambda21DepositMasterBFDCB176",
+            "Arn",
+          ],
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition",
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region",
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId",
+              },
+              ":",
+              {
+                "Ref": "PPBSAPI0E3DAE71",
+              },
+              "/",
+              {
+                "Ref": "PPBSAPIDeploymentStagev1E014C5FB",
+              },
+              "/POST/Deposit",
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "PPBSAPIDepositPOSTB646EF75": {
+      "Properties": {
+        "ApiKeyRequired": true,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "POST",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region",
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "lambda21DepositMasterBFDCB176",
+                    "Arn",
+                  ],
+                },
+                "/invocations",
+              ],
+            ],
+          },
+        },
+        "ResourceId": {
+          "Ref": "PPBSAPIDepositB71AD248",
+        },
+        "RestApiId": {
+          "Ref": "PPBSAPI0E3DAE71",
+        },
+      },
+      "Type": "AWS::ApiGateway::Method",
+    },
+    "PPBSAPIUsagePlan8F3E2648": {
+      "Properties": {
+        "ApiStages": [
+          {
+            "ApiId": {
+              "Ref": "PPBSAPI0E3DAE71",
+            },
+            "Stage": {
+              "Ref": "PPBSAPIDeploymentStagev1E014C5FB",
+            },
+            "Throttle": {},
+          },
+        ],
+        "Quota": {
+          "Limit": 500000,
+          "Period": "MONTH",
+        },
+        "Throttle": {
+          "BurstLimit": 500,
+          "RateLimit": 100,
+        },
+        "UsagePlanName": "UsagePlan-PAMOY",
+      },
+      "Type": "AWS::ApiGateway::UsagePlan",
+    },
+    "PPBSAPIUsagePlanUsagePlanKeyResourcetestPPBSAPIApiKeyE49144F2386D8D0A": {
+      "Properties": {
+        "KeyId": {
+          "Ref": "PPBSAPIApiKey3635F8B3",
+        },
+        "KeyType": "API_KEY",
+        "UsagePlanId": {
+          "Ref": "PPBSAPIUsagePlan8F3E2648",
+        },
+      },
+      "Type": "AWS::ApiGateway::UsagePlanKey",
+    },
+    "PPBSLambdaLayer2B9369BE": {
+      "Properties": {
+        "CompatibleArchitectures": [
+          "x86_64",
+        ],
+        "CompatibleRuntimes": [
+          "nodejs18.x",
+        ],
+        "Content": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+          },
+          "S3Key": "a347c1f40a4a65a4f7ca9a7d11753a4ec97a91bc3660a96fe89f2285d12a19c4.zip",
+        },
+        "Description": "PPBS Lambda Layer",
+      },
+      "Type": "AWS::Lambda::LayerVersion",
+    },
+    "VPCB9E5F0B4": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test/VPC",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VPCIGWB7E252D3": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test/VPC",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VPCPrivateSubnet1DefaultRouteAE1D6490": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VPCPublicSubnet1NATGatewayE0556630",
+        },
+        "RouteTableId": {
+          "Ref": "VPCPrivateSubnet1RouteTableBE8A6027",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VPCPrivateSubnet1RouteTableAssociation347902D1": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VPCPrivateSubnet1RouteTableBE8A6027",
+        },
+        "SubnetId": {
+          "Ref": "VPCPrivateSubnet1Subnet8BCA10E0",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VPCPrivateSubnet1RouteTableBE8A6027": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test/VPC/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VPCB9E5F0B4",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VPCPrivateSubnet1Subnet8BCA10E0": {
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": "",
+            },
+          ],
+        },
+        "CidrBlock": "10.0.128.0/18",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "test/VPC/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VPCB9E5F0B4",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VPCPrivateSubnet2DefaultRouteF4F5CFD2": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VPCPublicSubnet2NATGateway3C070193",
+        },
+        "RouteTableId": {
+          "Ref": "VPCPrivateSubnet2RouteTable0A19E10E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VPCPrivateSubnet2RouteTable0A19E10E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test/VPC/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VPCB9E5F0B4",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VPCPrivateSubnet2RouteTableAssociation0C73D413": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VPCPrivateSubnet2RouteTable0A19E10E",
+        },
+        "SubnetId": {
+          "Ref": "VPCPrivateSubnet2SubnetCFCDAA7A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VPCPrivateSubnet2SubnetCFCDAA7A": {
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::GetAZs": "",
+            },
+          ],
+        },
+        "CidrBlock": "10.0.192.0/18",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "test/VPC/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VPCB9E5F0B4",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VPCPublicSubnet1DefaultRoute91CEF279": {
+      "DependsOn": [
+        "VPCVPCGW99B986DC",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VPCIGWB7E252D3",
+        },
+        "RouteTableId": {
+          "Ref": "VPCPublicSubnet1RouteTableFEE4B781",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VPCPublicSubnet1EIP6AD938E8": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test/VPC/PublicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "VPCPublicSubnet1NATGatewayE0556630": {
+      "DependsOn": [
+        "VPCPublicSubnet1DefaultRoute91CEF279",
+        "VPCPublicSubnet1RouteTableAssociation0B0896DC",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VPCPublicSubnet1EIP6AD938E8",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "VPCPublicSubnet1SubnetB4246D30",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test/VPC/PublicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "VPCPublicSubnet1RouteTableAssociation0B0896DC": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VPCPublicSubnet1RouteTableFEE4B781",
+        },
+        "SubnetId": {
+          "Ref": "VPCPublicSubnet1SubnetB4246D30",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VPCPublicSubnet1RouteTableFEE4B781": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test/VPC/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VPCB9E5F0B4",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VPCPublicSubnet1SubnetB4246D30": {
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": "",
+            },
+          ],
+        },
+        "CidrBlock": "10.0.0.0/18",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "test/VPC/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VPCB9E5F0B4",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VPCPublicSubnet2DefaultRouteB7481BBA": {
+      "DependsOn": [
+        "VPCVPCGW99B986DC",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VPCIGWB7E252D3",
+        },
+        "RouteTableId": {
+          "Ref": "VPCPublicSubnet2RouteTable6F1A15F1",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VPCPublicSubnet2EIP4947BC00": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test/VPC/PublicSubnet2",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "VPCPublicSubnet2NATGateway3C070193": {
+      "DependsOn": [
+        "VPCPublicSubnet2DefaultRouteB7481BBA",
+        "VPCPublicSubnet2RouteTableAssociation5A808732",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VPCPublicSubnet2EIP4947BC00",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "VPCPublicSubnet2Subnet74179F39",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test/VPC/PublicSubnet2",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "VPCPublicSubnet2RouteTable6F1A15F1": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test/VPC/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VPCB9E5F0B4",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VPCPublicSubnet2RouteTableAssociation5A808732": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VPCPublicSubnet2RouteTable6F1A15F1",
+        },
+        "SubnetId": {
+          "Ref": "VPCPublicSubnet2Subnet74179F39",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VPCPublicSubnet2Subnet74179F39": {
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::GetAZs": "",
+            },
+          ],
+        },
+        "CidrBlock": "10.0.64.0/18",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "test/VPC/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VPCB9E5F0B4",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VPCSecretsManagerEndpoint5B9B8B35": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "secretsmanager:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*",
+              },
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PrivateDnsEnabled": true,
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VPCSecretsManagerEndpointSecurityGroup1955BBE9",
+              "GroupId",
+            ],
+          },
+        ],
+        "ServiceName": {
+          "Fn::Join": [
+            "",
+            [
+              "com.amazonaws.",
+              {
+                "Ref": "AWS::Region",
+              },
+              ".secretsmanager",
+            ],
+          ],
+        },
+        "SubnetIds": [
+          {
+            "Ref": "VPCPrivateSubnet1Subnet8BCA10E0",
+          },
+          {
+            "Ref": "VPCPrivateSubnet2SubnetCFCDAA7A",
+          },
+        ],
+        "VpcEndpointType": "Interface",
+        "VpcId": {
+          "Ref": "VPCB9E5F0B4",
+        },
+      },
+      "Type": "AWS::EC2::VPCEndpoint",
+    },
+    "VPCSecretsManagerEndpointSecurityGroup1955BBE9": {
+      "Properties": {
+        "GroupDescription": "test/VPC/SecretsManagerEndpoint/SecurityGroup",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": {
+              "Fn::GetAtt": [
+                "VPCB9E5F0B4",
+                "CidrBlock",
+              ],
+            },
+            "Description": {
+              "Fn::Join": [
+                "",
+                [
+                  "from ",
+                  {
+                    "Fn::GetAtt": [
+                      "VPCB9E5F0B4",
+                      "CidrBlock",
+                    ],
+                  },
+                  ":443",
+                ],
+              ],
+            },
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "test/VPC",
+          },
+        ],
+        "VpcId": {
+          "Ref": "VPCB9E5F0B4",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "VPCVPCGW99B986DC": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VPCIGWB7E252D3",
+        },
+        "VpcId": {
+          "Ref": "VPCB9E5F0B4",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+    "lambda11BackMaster89652D3B": {
+      "DependsOn": [
+        "lambda11BackMasterServiceRoleDefaultPolicy0521755D",
+        "lambda11BackMasterServiceRole5E20D89C",
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+          },
+          "S3Key": "544fa0e9c74fc8e4950aa45bdf9268c7376eef3f45c24be7ecadc2fc23650716.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "ALCHEMY_HTTPS": "https://polygon-amoy.g.alchemy.com/v2/X-EgWj6_euu63pUi4GRqJPA11WWaVab0",
+            "API_GATEWAY_APIKEY": "8zwed4Hlmt1FZQCHdN5nF31a4g7gCBW42m7OcbLv",
+            "API_GATEWAY_URL": "https://e97szkp2da.execute-api.ap-northeast-1.amazonaws.com/v1",
+            "EXPLOERE": "https://amoy.polygonscan.com",
+            "FIREBLOCKS_API_KEY_SIGNER": "60895bff-457a-49da-977e-7bbe7698a73b",
+            "FIREBLOCKS_ASSET_ID": "AMOY_POLYGON_TEST",
+            "FIREBLOCKS_ASSET_ID_MYTOKEN": "PPC_AMOY_POLYGON_TEST_VS6A",
+            "FIREBLOCKS_URL": "https://api.fireblocks.io",
+            "FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER": "24",
+            "FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR": "0x46FA7F84edcED825F8F8E237fbf1B8C5954C2E0E",
+            "NFCADDRESSREGISTRYPROXY_CA": "0x990C6E8d693577D1eD2F1F7a1CC2FAE4EB7Ecd47",
+            "POLYGON_RPC_URL": "https://rpc.ankr.com/polygon_amoy",
+            "SQS1x_URL": {
+              "Ref": "CMD1xQueue25886369",
+            },
+            "TOKEN_CA": "0xc692CDb48Ad01Fe7388A213374869556C88B1fFb",
+            "TZ": "Asia/Tokyo",
+          },
+        },
+        "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "PPBSLambdaLayer2B9369BE",
+          },
+        ],
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "lambda11BackMasterServiceRole5E20D89C",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs18.x",
+        "Timeout": 30,
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "LambdaSecurityGroup0BD9FC99",
+                "GroupId",
+              ],
+            },
+          ],
+          "SubnetIds": [
+            {
+              "Ref": "VPCPrivateSubnet1Subnet8BCA10E0",
+            },
+            {
+              "Ref": "VPCPrivateSubnet2SubnetCFCDAA7A",
+            },
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "lambda11BackMasterServiceRole5E20D89C": {
+      "DependsOn": [
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "lambda11BackMasterServiceRoleDefaultPolicy0521755D": {
+      "DependsOn": [
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "secretsmanager:GetSecretValue",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "CMD1xQueue25886369",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "lambda11BackMasterServiceRoleDefaultPolicy0521755D",
+        "Roles": [
+          {
+            "Ref": "lambda11BackMasterServiceRole5E20D89C",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "lambda12BackSubAllowSQS706DA8E1": {
+      "DependsOn": [
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "lambda12BackSubD21AB9C5",
+            "Arn",
+          ],
+        },
+        "Principal": "sqs.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "CMD1xQueue25886369",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "lambda12BackSubD21AB9C5": {
+      "DependsOn": [
+        "lambda12BackSubServiceRoleDefaultPolicyA4C38C49",
+        "lambda12BackSubServiceRole5CBA0930",
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+          },
+          "S3Key": "330dd27ff5671e74f6d4ea1746fefe47182452d6393eebc083864ef16e877aa3.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "ALCHEMY_HTTPS": "https://polygon-amoy.g.alchemy.com/v2/X-EgWj6_euu63pUi4GRqJPA11WWaVab0",
+            "API_GATEWAY_APIKEY": "8zwed4Hlmt1FZQCHdN5nF31a4g7gCBW42m7OcbLv",
+            "API_GATEWAY_URL": "https://e97szkp2da.execute-api.ap-northeast-1.amazonaws.com/v1",
+            "EXPLOERE": "https://amoy.polygonscan.com",
+            "FIREBLOCKS_API_KEY_SIGNER": "60895bff-457a-49da-977e-7bbe7698a73b",
+            "FIREBLOCKS_ASSET_ID": "AMOY_POLYGON_TEST",
+            "FIREBLOCKS_ASSET_ID_MYTOKEN": "PPC_AMOY_POLYGON_TEST_VS6A",
+            "FIREBLOCKS_URL": "https://api.fireblocks.io",
+            "FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER": "24",
+            "FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR": "0x46FA7F84edcED825F8F8E237fbf1B8C5954C2E0E",
+            "NFCADDRESSREGISTRYPROXY_CA": "0x990C6E8d693577D1eD2F1F7a1CC2FAE4EB7Ecd47",
+            "POLYGON_RPC_URL": "https://rpc.ankr.com/polygon_amoy",
+            "SQS1x_URL": {
+              "Ref": "CMD1xQueue25886369",
+            },
+            "TOKEN_CA": "0xc692CDb48Ad01Fe7388A213374869556C88B1fFb",
+            "TZ": "Asia/Tokyo",
+          },
+        },
+        "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "PPBSLambdaLayer2B9369BE",
+          },
+        ],
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "lambda12BackSubServiceRole5CBA0930",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs18.x",
+        "Timeout": 120,
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "LambdaSecurityGroup0BD9FC99",
+                "GroupId",
+              ],
+            },
+          ],
+          "SubnetIds": [
+            {
+              "Ref": "VPCPrivateSubnet1Subnet8BCA10E0",
+            },
+            {
+              "Ref": "VPCPrivateSubnet2SubnetCFCDAA7A",
+            },
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "lambda12BackSubServiceRole5CBA0930": {
+      "DependsOn": [
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "lambda12BackSubServiceRoleDefaultPolicyA4C38C49": {
+      "DependsOn": [
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "secretsmanager:GetSecretValue",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "CMD1xQueue25886369",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "lambda12BackSubServiceRoleDefaultPolicyA4C38C49",
+        "Roles": [
+          {
+            "Ref": "lambda12BackSubServiceRole5CBA0930",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "lambda12BackSubSqsEventSourcetestCMD1xQueueB146F51292A53106": {
+      "DependsOn": [
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "BatchSize": 1,
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "CMD1xQueue25886369",
+            "Arn",
+          ],
+        },
+        "FunctionName": {
+          "Ref": "lambda12BackSubD21AB9C5",
+        },
+        "FunctionResponseTypes": [
+          "ReportBatchItemFailures",
+        ],
+        "ScalingConfig": {
+          "MaximumConcurrency": 8,
+        },
+      },
+      "Type": "AWS::Lambda::EventSourceMapping",
+    },
+    "lambda21DepositMasterBFDCB176": {
+      "DependsOn": [
+        "lambda21DepositMasterServiceRoleDefaultPolicyCF8F7F1F",
+        "lambda21DepositMasterServiceRole16778644",
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+          },
+          "S3Key": "ebe5559b2aaee1b08410fde33bd29febacb9e919b06d5e6774eb2d53ae68d6b2.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "ALCHEMY_HTTPS": "https://polygon-amoy.g.alchemy.com/v2/X-EgWj6_euu63pUi4GRqJPA11WWaVab0",
+            "API_GATEWAY_APIKEY": "8zwed4Hlmt1FZQCHdN5nF31a4g7gCBW42m7OcbLv",
+            "API_GATEWAY_URL": "https://e97szkp2da.execute-api.ap-northeast-1.amazonaws.com/v1",
+            "DOMAIN_SEPARATOR_PARAM_NAME_TOKEN": "ParkPayCoinV2",
+            "DOMAIN_SEPARATOR_PARAM_VERSION_TOKEN": "1",
+            "EXPLOERE": "https://amoy.polygonscan.com",
+            "FIREBLOCKS_API_KEY_SIGNER": "60895bff-457a-49da-977e-7bbe7698a73b",
+            "FIREBLOCKS_ASSET_ID": "AMOY_POLYGON_TEST",
+            "FIREBLOCKS_ASSET_ID_MYTOKEN": "PPC_AMOY_POLYGON_TEST_VS6A",
+            "FIREBLOCKS_URL": "https://api.fireblocks.io",
+            "FIREBLOCKS_VAULT_ACCOUNT_ID_PARKOWNER_ADDR": "0x3F0996d182aB9c1942b7b46dAb35e5eEc154fD75",
+            "FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER": "24",
+            "FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR": "0x46FA7F84edcED825F8F8E237fbf1B8C5954C2E0E",
+            "NFCADDRESSREGISTRYPROXY_CA": "0x990C6E8d693577D1eD2F1F7a1CC2FAE4EB7Ecd47",
+            "PARKINGPAYMENTPROXY_CA": "0x08c3b89fFb63E9FE62Ed8C95Df9e53e3daB53e96",
+            "POLYGON_RPC_URL": "https://rpc.ankr.com/polygon_amoy",
+            "SQS2x_URL": {
+              "Ref": "CMD2xQueue9DE094EC",
+            },
+            "TOKEN_CA": "0xc692CDb48Ad01Fe7388A213374869556C88B1fFb",
+            "TZ": "Asia/Tokyo",
+          },
+        },
+        "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "PPBSLambdaLayer2B9369BE",
+          },
+        ],
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "lambda21DepositMasterServiceRole16778644",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs18.x",
+        "Timeout": 35,
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "LambdaSecurityGroup0BD9FC99",
+                "GroupId",
+              ],
+            },
+          ],
+          "SubnetIds": [
+            {
+              "Ref": "VPCPrivateSubnet1Subnet8BCA10E0",
+            },
+            {
+              "Ref": "VPCPrivateSubnet2SubnetCFCDAA7A",
+            },
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "lambda21DepositMasterServiceRole16778644": {
+      "DependsOn": [
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "lambda21DepositMasterServiceRoleDefaultPolicyCF8F7F1F": {
+      "DependsOn": [
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "secretsmanager:GetSecretValue",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "CMD2xQueue9DE094EC",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "lambda21DepositMasterServiceRoleDefaultPolicyCF8F7F1F",
+        "Roles": [
+          {
+            "Ref": "lambda21DepositMasterServiceRole16778644",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "lambda22DepositSubAllowSQS08D05B55": {
+      "DependsOn": [
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "lambda22DepositSubCBA01F5B",
+            "Arn",
+          ],
+        },
+        "Principal": "sqs.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "CMD2xQueue9DE094EC",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "lambda22DepositSubCBA01F5B": {
+      "DependsOn": [
+        "lambda22DepositSubServiceRoleDefaultPolicy6A4F3A45",
+        "lambda22DepositSubServiceRole49FB74E9",
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+          },
+          "S3Key": "47292c1df50d98ecaab03e88426d5677154ab621ad80d36d5feb1ab1661ebf15.zip",
+        },
+        "Environment": {
+          "Variables": {
+            "ALCHEMY_HTTPS": "https://polygon-amoy.g.alchemy.com/v2/X-EgWj6_euu63pUi4GRqJPA11WWaVab0",
+            "API_GATEWAY_APIKEY": "8zwed4Hlmt1FZQCHdN5nF31a4g7gCBW42m7OcbLv",
+            "API_GATEWAY_URL": "https://e97szkp2da.execute-api.ap-northeast-1.amazonaws.com/v1",
+            "DOMAIN_SEPARATOR_PARAM_NAME_TOKEN": "ParkPayCoinV2",
+            "DOMAIN_SEPARATOR_PARAM_VERSION_TOKEN": "1",
+            "EXPLOERE": "https://amoy.polygonscan.com",
+            "FIREBLOCKS_API_KEY_SIGNER": "60895bff-457a-49da-977e-7bbe7698a73b",
+            "FIREBLOCKS_ASSET_ID": "AMOY_POLYGON_TEST",
+            "FIREBLOCKS_ASSET_ID_MYTOKEN": "PPC_AMOY_POLYGON_TEST_VS6A",
+            "FIREBLOCKS_URL": "https://api.fireblocks.io",
+            "FIREBLOCKS_VAULT_ACCOUNT_ID_PARKOWNER_ADDR": "0x3F0996d182aB9c1942b7b46dAb35e5eEc154fD75",
+            "FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER": "24",
+            "FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR": "0x46FA7F84edcED825F8F8E237fbf1B8C5954C2E0E",
+            "NFCADDRESSREGISTRYPROXY_CA": "0x990C6E8d693577D1eD2F1F7a1CC2FAE4EB7Ecd47",
+            "PARKINGPAYMENTPROXY_CA": "0x08c3b89fFb63E9FE62Ed8C95Df9e53e3daB53e96",
+            "POLYGON_RPC_URL": "https://rpc.ankr.com/polygon_amoy",
+            "SQS2x_URL": {
+              "Ref": "CMD2xQueue9DE094EC",
+            },
+            "TOKEN_CA": "0xc692CDb48Ad01Fe7388A213374869556C88B1fFb",
+            "TZ": "Asia/Tokyo",
+          },
+        },
+        "Handler": "index.handler",
+        "Layers": [
+          {
+            "Ref": "PPBSLambdaLayer2B9369BE",
+          },
+        ],
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "lambda22DepositSubServiceRole49FB74E9",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs18.x",
+        "Timeout": 120,
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "LambdaSecurityGroup0BD9FC99",
+                "GroupId",
+              ],
+            },
+          ],
+          "SubnetIds": [
+            {
+              "Ref": "VPCPrivateSubnet1Subnet8BCA10E0",
+            },
+            {
+              "Ref": "VPCPrivateSubnet2SubnetCFCDAA7A",
+            },
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "lambda22DepositSubServiceRole49FB74E9": {
+      "DependsOn": [
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "lambda22DepositSubServiceRoleDefaultPolicy6A4F3A45": {
+      "DependsOn": [
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "secretsmanager:GetSecretValue",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes",
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "CMD2xQueue9DE094EC",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "lambda22DepositSubServiceRoleDefaultPolicy6A4F3A45",
+        "Roles": [
+          {
+            "Ref": "lambda22DepositSubServiceRole49FB74E9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "lambda22DepositSubSqsEventSourcetestCMD2xQueueE10B6509B637A813": {
+      "DependsOn": [
+        "VPCPrivateSubnet1DefaultRouteAE1D6490",
+        "VPCPrivateSubnet1RouteTableAssociation347902D1",
+        "VPCPrivateSubnet2DefaultRouteF4F5CFD2",
+        "VPCPrivateSubnet2RouteTableAssociation0C73D413",
+      ],
+      "Properties": {
+        "BatchSize": 1,
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "CMD2xQueue9DE094EC",
+            "Arn",
+          ],
+        },
+        "FunctionName": {
+          "Ref": "lambda22DepositSubCBA01F5B",
+        },
+        "FunctionResponseTypes": [
+          "ReportBatchItemFailures",
+        ],
+        "ScalingConfig": {
+          "MaximumConcurrency": 8,
+        },
+      },
+      "Type": "AWS::Lambda::EventSourceMapping",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;

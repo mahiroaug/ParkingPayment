@@ -14,6 +14,8 @@
   - [3.1. environment](#31-environment)
   - [3.2. Token](#32-token)
   - [3.3. Polygonscan verify](#33-polygonscan-verify)
+- [4. cdk](#4-cdk)
+- [API test](#api-test)
 
 # 1. スマ婚要件
 
@@ -261,5 +263,47 @@ npx hardhat verify --network amoy_metamask 0x08c3b89fFb63E9FE62Ed8C95Df9e53e3daB
 
 ## Registry
 npx hardhat verify --network amoy_metamask 0x990C6E8d693577D1eD2F1F7a1CC2FAE4EB7Ecd47 0xF0085882d78c455d5CcF3a25EAE033e44D6701E1
+
+```
+
+# 4. cdk
+
+```bash
+
+## install
+npx projen new awscdk-app-ts
+
+## set up environment
+npx cdk bootstrap
+
+## project build
+npx projen build
+
+## project deploy
+npx projen deploy
+
+```
+
+# API test
+
+```bash
+curl -w "\n%{http_code}\n" \
+-X POST https://**********.execute-api.ap-northeast-1.amazonaws.com/v1/CreateVandM \
+-H "Content-Type: application/json" \
+-H "x-api-key: <YOUR_API_KEY>" \
+-d '{
+    "cardId": "id-2111",
+    "name": "testName2111"
+}'
+```
+
+```bash
+curl -w "\n%{http_code}\n" \
+-X POST https://**********.execute-api.ap-northeast-1.amazonaws.com/v1/Deposit \
+-H "Content-Type: application/json" \
+-H "x-api-key: <YOUR_API_KEY>" \
+-d '{
+    "cardId": "id-2111"
+}'
 
 ```
