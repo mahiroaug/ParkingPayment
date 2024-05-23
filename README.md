@@ -66,42 +66,30 @@
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor User
-    actor PO as ParkingOwner
-    actor ServiceOwner as ServiceOwner
-    participant PP as ParkPayment
-    participant Token as ERC20Token
-    participant Event
+  actor User as User
+  actor PO as ParkingOwner
+  actor ServiceOwner as ServiceOwner
+  participant PP as ParkPayment
+  participant Token as ERC20Token
+  participant Event as Event
 
-    Note over User: deposit
-
-    User->>+PP: deposit()
-    activate PP
-    PP->>+Token: transferFrom(--> ParkPayment)
-
-    PP-->>-Event: DepositMade
-
-    Note over PO: Entry
-
-    PO->>+PP: Entry(User)
-    activate PP
-    PP-->>-Event: EntryRecorded
-
-    Note over PO: Exit
-
-    PO->>+PP: Exit(User)
-    activate PP
-    PP->>+Token: transfer(parking Fee --> P0)
-    PP->>+Token: transfer(system Fee --> SO)
-    PP-->>-Event: ExitRecorded
-
-    Note over User: withdraw
-
-    User->>+PP: withdraw()
-    activate PP
-    PP->>+Token: transfer(--> User)
-    PP-->>-Event: FundsWithdrawn
+  autonumber
+  Note over User: deposit
+  User ->>+ PP: deposit()
+  PP ->>+ Token: transferFrom(--> ParkPayment)
+  PP -->>- Event: DepositMade
+  Note over PO: Entry
+  PO ->>+ PP: Entry(User)
+  PP -->>- Event: EntryRecorded
+  Note over PO: Exit
+  PO ->>+ PP: Exit(User)
+  PP ->>+ Token: transfer(parking Fee --> P0)
+  PP ->>+ Token: transfer(system Fee --> SO)
+  PP -->>- Event: ExitRecorded
+  Note over User: withdraw
+  User ->>+ PP: withdraw()
+  PP ->>+ Token: transfer(--> User)
+  PP -->>- Event: FundsWithdrawn
 ```
 
 ## 1.3. その他のコントラクト
@@ -112,36 +100,24 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor Owner
-    actor User
-    participant NFCAddressRegistry as Registry(Contract)
-    participant Event
+  actor Owner as Owner
+  actor User as User
+  participant NFCAddressRegistry as Registry(Contract)
+  participant Event as Event
 
-
-    Note over Owner: add ID
-
-    Owner->>+NFCAddressRegistry: addId(id, addr)
-    activate NFCAddressRegistry
-    NFCAddressRegistry-->>-Event: IdAdded(id, addr)
-
-    Note over User: get Address
-
-    User->>+NFCAddressRegistry: getMapAddress(id)
-    activate NFCAddressRegistry
-    NFCAddressRegistry-->>-User: address
-
-    Note over User: get Id
-
-    User->>+NFCAddressRegistry: getMapId(addr)
-    activate NFCAddressRegistry
-    NFCAddressRegistry-->>-User: id
-
-    Note over Owner: remove ID
-
-    Owner->>+NFCAddressRegistry: removeId(id)
-    activate NFCAddressRegistry
-    NFCAddressRegistry-->>-Event: IdRemoved(id)
+  autonumber
+  Note over Owner: add ID
+  Owner ->>+ NFCAddressRegistry: addId(id, addr)
+  NFCAddressRegistry -->>- Event: IdAdded(id, addr)
+  Note over User: get Address
+  User ->>+ NFCAddressRegistry: getMapAddress(id)
+  NFCAddressRegistry -->>- User: address
+  Note over User: get Id
+  User ->>+ NFCAddressRegistry: getMapId(addr)
+  NFCAddressRegistry -->>- User: id
+  Note over Owner: remove ID
+  Owner ->>+ NFCAddressRegistry: removeId(id)
+  NFCAddressRegistry -->>- Event: IdRemoved(id)
 ```
 
 # 2. Deploy
