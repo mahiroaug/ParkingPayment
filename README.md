@@ -6,6 +6,9 @@
     - [1.2.3. ## STEP3 入庫時](#123--step3-入庫時)
     - [1.2.4. ## STEP4 出庫時](#124--step4-出庫時)
     - [1.2.5. ## STEP5 預託終了](#125--step5-預託終了)
+    - [1.2.6. ##シーケンス図 (ParkingPayment)](#126-シーケンス図-parkingpayment)
+  - [1.3. その他のコントラクト](#13-その他のコントラクト)
+    - [1.3.1. Registry](#131-registry)
 - [2. Deploy](#2-deploy)
   - [2.1. Token](#21-token)
   - [2.2. ParkingPayment](#22-parkingpayment)
@@ -58,6 +61,88 @@
 
 - 一定期間経過後、Alice はデポジット残高を Alice のアドレスへ引き出すことができる。これはトークンの種類ごとに実行する必要がある。
 - Carol だけはいつでも Alice のデポジット残高を Alice のアドレスへ引き戻すことができる
+
+### 1.2.6. ##シーケンス図 (ParkingPayment)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    actor PO as ParkingOwner
+    actor ServiceOwner as ServiceOwner
+    participant PP as ParkPayment
+    participant Token as ERC20Token
+    participant Event
+
+    Note over User: deposit
+
+    User->>+PP: deposit()
+    activate PP
+    PP->>+Token: transferFrom(--> ParkPayment)
+
+    PP-->>-Event: DepositMade
+
+    Note over PO: Entry
+
+    PO->>+PP: Entry(User)
+    activate PP
+    PP-->>-Event: EntryRecorded
+
+    Note over PO: Exit
+
+    PO->>+PP: Exit(User)
+    activate PP
+    PP->>+Token: transfer(parking Fee --> P0)
+    PP->>+Token: transfer(system Fee --> SO)
+    PP-->>-Event: ExitRecorded
+
+    Note over User: withdraw
+
+    User->>+PP: withdraw()
+    activate PP
+    PP->>+Token: transfer(--> User)
+    PP-->>-Event: FundsWithdrawn
+```
+
+## 1.3. その他のコントラクト
+
+### 1.3.1. Registry
+
+ユーザ ID と address 情報を紐付け保存しておくコントラクト
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Owner
+    actor User
+    participant NFCAddressRegistry as Registry(Contract)
+    participant Event
+
+
+    Note over Owner: add ID
+
+    Owner->>+NFCAddressRegistry: addId(id, addr)
+    activate NFCAddressRegistry
+    NFCAddressRegistry-->>-Event: IdAdded(id, addr)
+
+    Note over User: get Address
+
+    User->>+NFCAddressRegistry: getMapAddress(id)
+    activate NFCAddressRegistry
+    NFCAddressRegistry-->>-User: address
+
+    Note over User: get Id
+
+    User->>+NFCAddressRegistry: getMapId(addr)
+    activate NFCAddressRegistry
+    NFCAddressRegistry-->>-User: id
+
+    Note over Owner: remove ID
+
+    Owner->>+NFCAddressRegistry: removeId(id)
+    activate NFCAddressRegistry
+    NFCAddressRegistry-->>-Event: IdRemoved(id)
+```
 
 # 2. Deploy
 

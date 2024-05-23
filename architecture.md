@@ -1,28 +1,39 @@
 ```mermaid
-graph TD
-    subgraph User
-        A[NFC Card] -->|Reads Card| B[Card Reader]
-    end
+sequenceDiagram
+    autonumber
+    actor User
+    actor PO as PO
+    actor ServiceOwner as SO
+    participant PP as ParkPayment
+    participant Token as ERC20Token
+    participant Event
 
-    subgraph Front Server
-        B -->|API Request| C[PPBS-API]
-    end
+    Note over User: deposit
 
-    subgraph PPBS-stack
-        C -->|POST /CreateVandM| D[lambda11-BackMaster]
-        C -->|POST /Deposit| E[lambda21-DepositMaster]
-        C -->|POST /Deposit| F[lambda22-DepositSub]
-    end
+    User->>+PP: deposit()
+    activate PP
+    PP->>+Token: transferFrom(--> ParkPayment)
 
-    subgraph Smart Contracts
-        G[Token Contract]
-        H[ParkingPayment Contract]
-        I[NFCAddressRegistry Contract]
-    end
+    PP-->>-Event: DepositMade
 
-    D -->|Create Vault and Mint| G
-    E -->|Deposit Tokens| H
-    F -->|Permit Spender| G
-    F -->|Deposit Tokens| H
-    F -->|Get Address by Card ID| I
+    Note over PO: Entry
+
+    PO->>+PP: Entry(User)
+    activate PP
+    PP-->>-Event: EntryRecorded
+
+    Note over PO: Exit
+
+    PO->>+PP: Exit(User)
+    activate PP
+    PP->>+Token: transfer(parking Fee --> P0)
+    PP->>+Token: transfer(system Fee --> SO)
+    PP-->>-Event: ExitRecorded
+
+    Note over User: withdraw
+
+    User->>+PP: withdraw()
+    activate PP
+    PP->>+Token: transfer(--> User)
+    PP-->>-Event: FundsWithdrawn
 ```
