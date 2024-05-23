@@ -6,7 +6,10 @@ const axios = require("axios");
 const { Web3 } = require("web3");
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 const { FireblocksSDK } = require("fireblocks-sdk");
-const { FireblocksWeb3Provider, ChainId } = require("@fireblocks/fireblocks-web3-provider");
+const {
+  FireblocksWeb3Provider,
+  ChainId,
+} = require("@fireblocks/fireblocks-web3-provider");
 
 // -------------------CONTRACT------------------ //
 //// token
@@ -54,8 +57,13 @@ async function init_ENV() {
     // -------------------FIREBLOCKS SECRET KEY------------------- //
     console.log("region: ", region);
     const fb_apiSecret_secretName = "fireblocks_secret_SIGNER";
-    const fb_apiSecret_secret = await SecretsManager.getSecret(fb_apiSecret_secretName, region);
-    console.log(`${fb_apiSecret_secretName} : ${fb_apiSecret_secret.slice(0, 40)}`);
+    const fb_apiSecret_secret = await SecretsManager.getSecret(
+      fb_apiSecret_secretName,
+      region
+    );
+    console.log(
+      `${fb_apiSecret_secretName} : ${fb_apiSecret_secret.slice(0, 40)}`
+    );
 
     // -------------------FIREBLOCKS------------------- //
     //// fireblocks - SDK
@@ -99,12 +107,17 @@ async function _createVaultAccounts(assetId, vaultAccountNamePrefix) {
   let vault;
   let vaultWallet;
 
-  vaultRes = await fireblocks.createVaultAccount(vaultAccountNamePrefix.toString());
+  vaultRes = await fireblocks.createVaultAccount(
+    vaultAccountNamePrefix.toString()
+  );
   vault = {
     vaultName: vaultRes.name,
     vaultID: vaultRes.id,
   };
-  vaultWallet = await fireblocks.createVaultAsset(Number(vault.vaultID), assetId);
+  vaultWallet = await fireblocks.createVaultAsset(
+    Number(vault.vaultID),
+    assetId
+  );
   return { vault, vaultWallet };
 }
 
@@ -114,7 +127,10 @@ async function _createVaultAsset(vaultId, assetId) {
 }
 
 async function createVault(assetId, accountName, tokenId) {
-  const { vault, vaultWallet } = await _createVaultAccounts(assetId, accountName);
+  const { vault, vaultWallet } = await _createVaultAccounts(
+    assetId,
+    accountName
+  );
   await _createVaultAsset(vault.vaultID, tokenId);
 
   console.log(
@@ -154,6 +170,22 @@ async function bulkInsertVault(vault) {
   }
 }
 
+async function getAddressByCardId(cardId) {
+  try {
+    console.log(
+      `getAddressByCardId::registry.methods.getId : cardId=${cardId}`
+    );
+    const result = await registry_alc.methods.getMapAddress(cardId).call();
+    //const result = await registry.methods.idMap(cardId).call();
+    console.log(`result type: ${typeof result}`);
+    console.log(`getAddressByCardId::result::`, result);
+
+    return result;
+  } catch (error) {
+    console.error(`getAddressByCardId:: Error: ${error.message}`);
+  }
+}
+
 async function sleepForSeconds(amount) {
   console.log(`Sleeping for ${amount} seconds...`);
   await new Promise((r) => setTimeout(r, amount * 1000)); // milliseconds
@@ -164,17 +196,48 @@ async function sleepForSeconds(amount) {
 ////// public functions /////////////////
 /////////////////////////////////////////
 
-async function createVaultAndRegistDB(name) {
+async function createVaultAndRegistDB(cardId, name) {
   await init_ENV();
 
+  // step 1-1q : check cardId which is not used
+  console.log(
+    "step 1-1q : check cardId which is not used--------------------------"
+  );
+  try {
+    const res = await getAddressByCardId(cardId);
+    if (res !== "0x0000000000000000000000000000000000000000") {
+      console.log("cardId is already used");
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          errorType: "CardIdError",
+          errorMessage: "Card ID is already used",
+        }),
+      };
+    }
+  } catch (error) {
+    console.error("Error checking card ID: ", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        errorType: "InternalError",
+        errorMessage: "Error checking card ID",
+      }),
+    };
+  }
+
   // step 1-1A : create vault
-  console.log("step 1-1A : create vault--------------------------------------------");
+  console.log(
+    "step 1-1A : create vault--------------------------------------------"
+  );
   const resVault = await createVault(BASE_ASSET_ID, name, TOKEN_ASSET_ID);
   console.log("createVaultAndMint:resVault::", resVault);
   await sleepForSeconds(0.2);
 
   // step 1-1B : vaults bulk insert
-  console.log("step 1-1B : vaults bulk insert--------------------------------------");
+  console.log(
+    "step 1-1B : vaults bulk insert--------------------------------------"
+  );
   const resInsert = await bulkInsertVault(resVault);
   console.log("createVaultAndMint:resInsert::", resInsert.data);
 

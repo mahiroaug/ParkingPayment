@@ -24,11 +24,30 @@ exports.handler = async (event) => {
     // default only -----------------------------------------------
     case path_name01:
     default:
+      // process1 create vault and regist DB
       const { cardId, name } = JSON.parse(event.body);
-      const resVault = await CreateEngine.createVaultAndRegistDB(name);
+      const resVault = await CreateEngine.createVaultAndRegistDB(cardId, name);
       console.log("11AB_createVregistDB::resVault:", resVault);
 
-      const resQueue = await QueueEngine.sendSQSMessage(cardId, resVault.address);
+      if (resVault.statusCode === 400 || resVault.statusCode === 500) {
+        return {
+          headers,
+          statusCode: resVault.statusCode,
+          body: JSON.stringify({
+            message:
+              resVault.statusCode === 400
+                ? "Bad Request"
+                : "Internal Server Error",
+            details: JSON.parse(resVault.body),
+          }),
+        };
+      }
+
+      // process2 send SQS message
+      const resQueue = await QueueEngine.sendSQSMessage(
+        cardId,
+        resVault.address
+      );
       console.log("11AB_createVregistDB::resQueue:", resQueue);
 
       responseBody = {
