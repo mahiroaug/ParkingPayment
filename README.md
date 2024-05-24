@@ -470,7 +470,7 @@ sequenceDiagram
 
     Back->>+GSN: Deposit(address, PO, 600PPC)
     GSN-->>-Back: result
-    GSN->>+ParkPayment: Meta transaction(ERC2612)
+    GSN->>+ParkPayment: Meta transaction(ERC2771)
     Note over ParkPayment: Deposit(address, PO, 600PPC)
     ParkPayment->>+PPC: tranfserFrom(600PPC)
     Note over PPC: tranfserFrom(ParkPayment 600PPC)
