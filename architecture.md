@@ -1,39 +1,28 @@
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor User
-    actor PO as PO
-    actor ServiceOwner as SO
-    participant PP as ParkPayment
-    participant Token as ERC20Token
-    participant Event
+    participant Frontend
+    participant Back as Back Server
+    participant GSN as Gas Station
+    participant Fireblocks
+    participant Registry
 
-    Note over User: deposit
+    Frontend->>Back: createVaultAndMint(cardId, name)
+    Note left of Back: step1. create vault
+    Back->>Fireblocks: createVault(BASE_ASSET_ID, name, TOKEN_ASSET_ID)
+    Fireblocks-->>Back: resVault
 
-    User->>+PP: deposit()
-    activate PP
-    PP->>+Token: transferFrom(--> ParkPayment)
+    Back->>Back: log "step 1-1B : vaults bulk insert"
+    Back->>GSN: bulkInsertVault(resVault)
+    GSN-->>Back: resInsert
 
-    PP-->>-Event: DepositMade
+    Back->>Frontend: return
 
-    Note over PO: Entry
+    Back->>Back: log "step 1-1C : mint token"
+    Back->>GSN: mintToken(resVault.address, 1000)
+    GSN-->>Back: resGSN
 
-    PO->>+PP: Entry(User)
-    activate PP
-    PP-->>-Event: EntryRecorded
+    Back->>Back: log "step 1-1D : regist cardId"
+    Back->>Registry: registCardId(cardId, resVault.address)
+    Registry-->>Back: resTx
 
-    Note over PO: Exit
-
-    PO->>+PP: Exit(User)
-    activate PP
-    PP->>+Token: transfer(parking Fee --> P0)
-    PP->>+Token: transfer(system Fee --> SO)
-    PP-->>-Event: ExitRecorded
-
-    Note over User: withdraw
-
-    User->>+PP: withdraw()
-    activate PP
-    PP->>+Token: transfer(--> User)
-    PP-->>-Event: FundsWithdrawn
 ```
