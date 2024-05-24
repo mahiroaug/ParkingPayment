@@ -19,8 +19,10 @@
   - [3.3. Polygonscan verify](#33-polygonscan-verify)
 - [4. cdk](#4-cdk)
 - [5. API](#5-api)
-  - [5.1. Task1 Create Vault and Mint](#51-task1-create-vault-and-mint)
-  - [5.2. Task2 Deposit](#52-task2-deposit)
+  - [5.1. Task1 Create Vault and Mint(アドレス生成＆ミント)](#51-task1-create-vault-and-mintアドレス生成ミント)
+  - [5.2. Task2 Deposit(利用登録＆トークン預託)](#52-task2-deposit利用登録トークン預託)
+  - [Task3 Entry(入庫)](#task3-entry入庫)
+  - [Task4 Exit(出庫)](#task4-exit出庫)
 
 # 1. スマ婚要件
 
@@ -350,7 +352,7 @@ npx projen deploy
 
 # 5. API
 
-## 5.1. Task1 Create Vault and Mint
+## 5.1. Task1 Create Vault and Mint(アドレス生成＆ミント)
 
 ```bash
 
@@ -400,10 +402,10 @@ sequenceDiagram
     autonumber
 
     Client->>+Back: createVandM(cardId, name)
-    Back->>FB: createVault(BASE_ASSET_ID, name)
-    FB-->>Back: res(vaultId,address)
-    Back->>GSN: bulkInsert(vaultId,address)
-    GSN-->>Back: res(登録OKでーす)
+    Back->>+FB: createVault(BASE_ASSET_ID, name)
+    FB-->>-Back: res(vaultId,address)
+    Back->>+GSN: bulkInsert(vaultId,address)
+    GSN-->>-Back: res(登録OKでーす)
     Back-->>-Client: response(queue等)
 
     Note left of Back:ここまで数秒
@@ -416,16 +418,16 @@ sequenceDiagram
 
     Note left of Back:ここまで１分弱
 
-    Back->>FB: registId(cardId, address)
+    Back->>+FB: registId(cardId, address)
     FB->>+Registry: transaction
     Note over Registry: registId(cardId, address)
     Registry->>Event: IdAdded(id, addr)
     Registry-->>-FB: resTx
-    FB-->>Back: res
+    FB-->>-Back: res
     Note left of Back:ここまで１分強
 ```
 
-## 5.2. Task2 Deposit
+## 5.2. Task2 Deposit(利用登録＆トークン預託)
 
 ```bash
 
@@ -499,5 +501,84 @@ sequenceDiagram
     ParkPayment-->>-GSN: resTx
 
     Note left of Back:ここまで90秒弱
+
+```
+
+## Task3 Entry(入庫)
+
+Back サーバがやってること
+
+- Client からリクエストを受け付ける（引数はカード ID）
+- Registry コントラクトに問い合わせて address を入手する
+- Client にレスポンスを返す（ラウンドトリップタイム目標 3 秒）
+- ParkPayment コントラクトに address の入庫&時刻を記録
+
+```mermaid
+sequenceDiagram
+
+    participant Client as Client
+    participant Back as Back Server<br>(AWS)
+    participant FB as Fireblocks
+    participant Registry
+    participant ParkPayment
+    participant PPC as PPC<br>(ParkPayCoin)
+    participant Event
+    autonumber
+
+    Client->>+Back: Entry(cardId)
+    Back->>+Registry: call(carId)
+    Note over Registry: getMapAddress(cardId)
+    Registry-->>-Back: res(address)
+    Back-->>-Client: response(queue等)
+
+    Note left of Back:ここまで数秒
+
+    Back->>+FB: Entry(address)
+    FB->>+ParkPayment: transaction
+    Note over ParkPayment: Entry(address)
+    ParkPayment->>Event: EntryRecorded(address,timestamp)
+    ParkPayment-->>-FB: resTx
+    FB-->>-Back: res
+
+```
+
+## Task4 Exit(出庫)
+
+Back サーバがやってること
+
+- Client からリクエストを受け付ける（引数はカード ID）
+- Registry コントラクトに問い合わせて address を入手する
+- Client にレスポンスを返す（ラウンドトリップタイム目標 3 秒）
+- ParkPayment コントラクトに address の出庫&時刻を記録するとともに、料金計算を行い、システム手数料(3%)を差し引いた分を Bob(駐車場管理者)に送金し、システム手数料を Carol(サービスオーナ)に送金する
+
+```mermaid
+sequenceDiagram
+
+    participant Client as Client
+    participant Back as Back Server<br>(AWS)
+    participant FB as Fireblocks
+    participant Registry
+    participant ParkPayment
+    participant PPC as PPC<br>(ParkPayCoin)
+    participant Event
+    autonumber
+
+    Client->>+Back: Exit(cardId)
+    Back->>+Registry: call(carId)
+    Note over Registry: getMapAddress(cardId)
+    Registry-->>-Back: res(address)
+    Back-->>-Client: response(queue等)
+
+    Note left of Back:ここまで数秒
+
+    Back->>+FB: Exit(address)
+    FB->>+ParkPayment: transaction
+    Note over ParkPayment: Exit(address)
+    Note over ParkPayment: 料金自動計算
+    ParkPayment->>PPC: transfer(Bob,利用料)
+    ParkPayment->>PPC: transfer(Carol,手数料)
+    ParkPayment->>Event: ExitRecorded(address,利用時間,利用料,手数料)
+    ParkPayment-->>-FB: resTx
+    FB-->>-Back: res
 
 ```

@@ -3,39 +3,29 @@ sequenceDiagram
 
     participant Client as Client
     participant Back as Back Server<br>(AWS)
-    participant GSN as Gas Station<br>(AWS + Fireblocks)
     participant FB as Fireblocks
-    participant PPC as ParkPayCoin<br>(PPC)
     participant Registry
     participant ParkPayment
+    participant PPC as PPC<br>(ParkPayCoin)
     participant Event
     autonumber
 
-    Client->>+Back: Deposit(cardId)
+    Client->>+Back: Exit(cardId)
     Back->>+Registry: call(carId)
     Note over Registry: getMapAddress(cardId)
     Registry-->>-Back: res(address)
+    Back-->>-Client: response(queue等)
 
     Note left of Back:ここまで数秒
 
-    Back->>+GSN: PermitSpender(address, ParkPayment 600PPC)
-    GSN-->>-Back: result
-    GSN->>+PPC: Meta transaction(ERC2612)
-    Note over PPC: permit(address, ParkPayment 600PPC)
-    PPC-->>-GSN: resTx
-
-    Note left of Back:ここまで１分弱
-
-    Back->>+GSN: Deposit(address, PO, 600PPC)
-    GSN-->>-Back: result
-    GSN->>+ParkPayment: Meta transaction(ERC2612)
-    Note over ParkPayment: Deposit(address, PO, 600PPC)
-    ParkPayment->>+PPC: tranfserFrom(600PPC)
-    Note over PPC: tranfserFrom(ParkPayment 600PPC)
-    PPC-->>-ParkPayment: result
-    ParkPayment->>Event: DepositMade
-    ParkPayment-->>-GSN: resTx
-
-    Note left of Back:ここまで90秒弱
+    Back->>+FB: Exit(address)
+    FB->>+ParkPayment: transaction
+    Note over ParkPayment: Exit(address)
+    Note over ParkPayment: 料金自動計算
+    ParkPayment->>PPC: transfer(Bob,利用料)
+    ParkPayment->>PPC: transfer(Carol,手数料)
+    ParkPayment->>Event: ExitRecorded(address,利用時間,利用料,手数料)
+    ParkPayment-->>-FB: resTx
+    FB-->>-Back: res
 
 ```
