@@ -394,7 +394,7 @@ sequenceDiagram
     FB-->>Back: res(vaultId,address)
     Back->>GSN: bulkInsert(vaultId,address)
     GSN-->>Back: res(登録OKでーす)
-    Back-->>-Client: response(address)
+    Back-->>-Client: response(queue等)
 
     Note left of Back:ここまで数秒
 
@@ -457,7 +457,7 @@ sequenceDiagram
     Back->>+Registry: call(carId)
     Note over Registry: getMapAddress(cardId)
     Registry-->>-Back: res(address)
-    Back-->>-Client: response(address)
+    Back-->>-Client: response(queue等)
 
     Note left of Back:ここまで数秒
 
