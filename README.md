@@ -457,6 +457,7 @@ sequenceDiagram
     Back->>+Registry: call(carId)
     Note over Registry: getMapAddress(cardId)
     Registry-->>-Back: res(address)
+    Back-->>-Client: response(address)
 
     Note left of Back:ここまで数秒
 
