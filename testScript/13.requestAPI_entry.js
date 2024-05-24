@@ -270,8 +270,24 @@ async function Entry(requsetParam) {
   }
   await sleepForSeconds(1);
 
-  // step 1-1B1 : check balance for user_addr in ParkingPayment
-  console.log("step 3-1B1 : check balance for user_addr in ParkingPayment-----------------------");
+  let parkingStatus;
+
+  // step 1-1B1 : check the parking status
+  console.log("step 3-1B1 : check the parking status-----------------------");
+  parkingStatus = await getParkingStatusByAddress(user_addr);
+  console.log("Entry::parkingStatus::", parkingStatus.isParked);
+  if (parkingStatus.isParked === true) {
+    throw new Error("Error: The user is already parked.");
+  }
+
+  console.log("Entry::user_addr::", user_addr, "--->>>Get Balance");
+  await getAccountBalance(user_addr);
+  console.log("Entry::PP_CA::", PP_CA, "--->>>Get Balance");
+  await getAccountBalance(PP_CA);
+  await getAllowance(user_addr, PP_CA);
+
+  // step 1-1B2 : check balance for user_addr in ParkingPayment
+  console.log("step 3-1B2 : check balance for user_addr in ParkingPayment-----------------------");
   const amount = 30;
   const weiAmount = await web3_alchemy.utils.toWei(amount.toString(), "ether");
   let balanceInParkingPayment = 0;
@@ -285,22 +301,6 @@ async function Entry(requsetParam) {
     console.error(`Error retrieving or validating balance: ${error.message}`);
     throw error;
   }
-
-  let parkingStatus;
-
-  // step 1-1B2 : check the parking status
-  console.log("step 3-1B2 : check the parking status-----------------------");
-  parkingStatus = await getParkingStatusByAddress(user_addr);
-  console.log("Entry::parkingStatus::", parkingStatus.isParked);
-  if (parkingStatus.isParked === true) {
-    throw new Error("Error: The user is already parked.");
-  }
-
-  console.log("Entry::user_addr::", user_addr, "--->>>Get Balance");
-  await getAccountBalance(user_addr);
-  console.log("Entry::PP_CA::", PP_CA, "--->>>Get Balance");
-  await getAccountBalance(PP_CA);
-  await getAllowance(user_addr, PP_CA);
 
   // step 3-1B : Entry
   console.log("step 3-1C : Entry-------------------------");
@@ -335,5 +335,5 @@ async function Entry(requsetParam) {
   console.log("Done!");
 })().catch((e) => {
   console.error(`Failed: ${e}`);
-  exit(-1);
+  process.exit(-1);
 });

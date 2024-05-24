@@ -10,10 +10,7 @@ const {
   TransactionOperation,
   TransactionStatus,
 } = require("fireblocks-sdk");
-const {
-  FireblocksWeb3Provider,
-  ChainId,
-} = require("@fireblocks/fireblocks-web3-provider");
+const { FireblocksWeb3Provider, ChainId } = require("@fireblocks/fireblocks-web3-provider");
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 
 // -------------------COMMON----------------------- //
@@ -33,8 +30,7 @@ const minters = vaultsRaw.minters;
 
 //// token
 const TOKEN_CA = process.env.TOKENPROXY_CA;
-const TOKEN_ABI =
-  require("../artifacts/contracts/V21/JST_V21.sol/JST_V21.json").abi;
+const TOKEN_ABI = require("../artifacts/contracts/V21/JST_V21.sol/JST_V21.json").abi;
 
 //// parking payment
 const PP_CA = process.env.PARKINGPAYMENTPROXY_CA;
@@ -61,10 +57,7 @@ const assetId = BASE_ASSET_ID;
 
 // -------------------FIREBLOCKS------------------- //
 //// fireblocks - SDK
-const fb_apiSecret = fs.readFileSync(
-  path.resolve("fireblocks_secret_SIGNER.key"),
-  "utf8"
-);
+const fb_apiSecret = fs.readFileSync(path.resolve("fireblocks_secret_SIGNER.key"), "utf8");
 const fb_apiKey = process.env.FIREBLOCKS_API_KEY_SIGNER;
 const fb_base_url = process.env.FIREBLOCKS_URL;
 const fireblocks = new FireblocksSDK(fb_apiSecret, fb_apiKey, fb_base_url);
@@ -111,9 +104,7 @@ const sendTx = async (_to, _tx, _signer, _gasLimit) => {
     estimateMaxTxFee.toString(),
     "ether"
   );
-  console.log(
-    ` estimate MAX Tx Fee:${estimateMaxTxFee} (${estimateMaxTxFeeETH} ${assetId})`
-  );
+  console.log(` estimate MAX Tx Fee:${estimateMaxTxFee} (${estimateMaxTxFeeETH} ${assetId})`);
 
   // gasHex
   const gasHex = await web3_alchemy.utils.toHex(setGasLimit);
@@ -180,11 +171,7 @@ async function _permitSpender(from_addr, token_addr, amount) {
 
 async function _deposit(from_addr, po_addr, token_addr, amount) {
   // deposit -----------------
-  const data = parkingPayment_alc.methods.depositTokens(
-    token_addr,
-    amount,
-    po_addr
-  );
+  const data = parkingPayment_alc.methods.depositTokens(token_addr, amount, po_addr);
 
   const requestParam = {
     from_addr: from_addr,
@@ -211,9 +198,7 @@ async function _deposit(from_addr, po_addr, token_addr, amount) {
 
 async function getAddressByCardId(cardId) {
   try {
-    console.log(
-      `getAddressByCardId::registry.methods.getId : cardId=${cardId}`
-    );
+    console.log(`getAddressByCardId::registry.methods.getId : cardId=${cardId}`);
     const result = await registry.methods.getMapAddress(cardId).call();
     console.log(`getAddressByCardId::result::`, result);
 
@@ -234,12 +219,7 @@ async function getAccountBalance(address) {
 
   // native Balance
   const balance = await web3_alchemy.eth.getBalance(address);
-  console.log(
-    `${assetId} Balance : ${web3_alchemy.utils.fromWei(
-      balance,
-      "ether"
-    )} ${assetId}`
-  );
+  console.log(`${assetId} Balance : ${web3_alchemy.utils.fromWei(balance, "ether")} ${assetId}`);
 
   // token Balance
   const coinBalance = await token_alc.methods.balanceOf(address).call();
@@ -250,21 +230,14 @@ async function getAccountBalance(address) {
   const coinSymbol = await token_alc.methods.symbol().call();
 
   console.log(
-    `${coinName} Balance: ${web3_alchemy.utils.fromWei(
-      coinBalance,
-      "ether"
-    )} ${coinSymbol}`
+    `${coinName} Balance: ${web3_alchemy.utils.fromWei(coinBalance, "ether")} ${coinSymbol}`
   );
 }
 
 async function getAllowance(owner_addr, spender_addr) {
   const coinSymbol = await token_alc.methods.symbol().call();
-  const allowance = await token_alc.methods
-    .allowance(owner_addr, spender_addr)
-    .call();
-  console.log(
-    `Allowance: ${allowance} ${coinSymbol} (from ${owner_addr} to ${spender_addr})`
-  );
+  const allowance = await token_alc.methods.allowance(owner_addr, spender_addr).call();
+  console.log(`Allowance: ${allowance} ${coinSymbol} (from ${owner_addr} to ${spender_addr})`);
 }
 
 /////////////////////////////////////////
@@ -324,5 +297,5 @@ async function Deposit(requsetParam) {
   console.log("Done!");
 })().catch((e) => {
   console.error(`Failed: ${e}`);
-  exit(-1);
+  process.exit(-1);
 });

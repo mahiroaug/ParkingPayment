@@ -411,7 +411,7 @@ sequenceDiagram
     FB-->>-Back: res(vaultId,address)
     Back->>+GSN: bulkInsert(vaultId,address)
     GSN-->>-Back: res(登録OKでーす)
-    Back-->>-Client: response(queue等)
+    Back-->>-Client: response(vaultId,address等)
 
     Note left of Back:ここまで数秒
 
@@ -483,7 +483,7 @@ sequenceDiagram
     Back->>+Registry: call(carId)
     Note over Registry: getMapAddress(cardId)
     Registry-->>-Back: res(address)
-    Back-->>-Client: response(queue等)
+    Back-->>-Client: response()
 
     Note left of Back:ここまで数秒
 
@@ -514,9 +514,12 @@ sequenceDiagram
 Back サーバがやってること
 
 - Client からリクエストを受け付ける（引数はカード ID）
-- Registry コントラクトに問い合わせて address を入手する
+- Registry コントラクトにカード ID を問い合わせて、address を入手する
+- ParkPayment コントラクトに address の現在 status を問い合わせて、True(入庫状態)であれば 400 エラー
+- ParkPayment コントラクトに address の現在デポジット残高を問い合わせて、残高が 30PPC 未満であれば 400 エラー（デポジット追加して出直してきな）
 - Client にレスポンスを返す（ラウンドトリップタイム目標 3 秒）
-- ParkPayment コントラクトに address の入庫&時刻を記録
+- 異常系の場合はここで終了。正常系の場合はバックグラウンド処理に移行する
+- ParkPayment コントラクトに address の入庫処理を行う（status=True,timestamp=打刻）
 
 ```mermaid
 sequenceDiagram
@@ -534,7 +537,11 @@ sequenceDiagram
     Back->>+Registry: call(carId)
     Note over Registry: getMapAddress(cardId)
     Registry-->>-Back: res(address)
-    Back-->>-Client: response(queue等)
+    Back->>+ParkPayment: check ParkingStatus(address)
+    ParkPayment->>-Back: response ParkingStatus(True/False)
+    Back->>+ParkPayment: check Balance(address)
+    ParkPayment->>-Back: response Balance(amount)
+    Back-->>-Client: response()
 
     Note left of Back:ここまで数秒
 
@@ -553,6 +560,7 @@ Back サーバがやってること
 
 - Client からリクエストを受け付ける（引数はカード ID）
 - Registry コントラクトに問い合わせて address を入手する
+- ParkPayment コントラクトに address の現在 status を問い合わせて、False(出庫状態)であれば 400 エラー
 - Client にレスポンスを返す（ラウンドトリップタイム目標 3 秒）
 - ParkPayment コントラクトに address の出庫&時刻を記録するとともに、料金計算を行い、システム手数料(3%)を差し引いた分を Bob(駐車場管理者)に送金し、システム手数料を Carol(サービスオーナ)に送金する
 
@@ -572,7 +580,9 @@ sequenceDiagram
     Back->>+Registry: call(carId)
     Note over Registry: getMapAddress(cardId)
     Registry-->>-Back: res(address)
-    Back-->>-Client: response(queue等)
+    Back->>+ParkPayment: check ParkingStatus(address)
+    ParkPayment->>-Back: response ParkingStatus(True/False)
+    Back-->>-Client: response()
 
     Note left of Back:ここまで数秒
 

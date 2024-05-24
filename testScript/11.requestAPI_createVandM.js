@@ -10,10 +10,7 @@ const {
   TransactionOperation,
   TransactionStatus,
 } = require("fireblocks-sdk");
-const {
-  FireblocksWeb3Provider,
-  ChainId,
-} = require("@fireblocks/fireblocks-web3-provider");
+const { FireblocksWeb3Provider, ChainId } = require("@fireblocks/fireblocks-web3-provider");
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 
 // -------------------COMMON----------------------- //
@@ -33,8 +30,7 @@ const minters = vaultsRaw.minters;
 
 //// token
 const TOKEN_CA = process.env.TOKENPROXY_CA;
-const TOKEN_ABI =
-  require("../artifacts/contracts/V21/JST_V21.sol/JST_V21.json").abi;
+const TOKEN_ABI = require("../artifacts/contracts/V21/JST_V21.sol/JST_V21.json").abi;
 
 //// registry
 const REGISTRY_CA = process.env.NFCADDRESSREGISTRYPROXY_CA;
@@ -55,10 +51,7 @@ const assetId = BASE_ASSET_ID;
 
 // -------------------FIREBLOCKS------------------- //
 //// fireblocks - SDK
-const fb_apiSecret = fs.readFileSync(
-  path.resolve("fireblocks_secret_SIGNER.key"),
-  "utf8"
-);
+const fb_apiSecret = fs.readFileSync(path.resolve("fireblocks_secret_SIGNER.key"), "utf8");
 const fb_apiKey = process.env.FIREBLOCKS_API_KEY_SIGNER;
 const fb_base_url = process.env.FIREBLOCKS_URL;
 const fireblocks = new FireblocksSDK(fb_apiSecret, fb_apiKey, fb_base_url);
@@ -105,9 +98,7 @@ const sendTx = async (_to, _tx, _signer, _gasLimit) => {
     estimateMaxTxFee.toString(),
     "ether"
   );
-  console.log(
-    ` estimate MAX Tx Fee:${estimateMaxTxFee} (${estimateMaxTxFeeETH} ${assetId})`
-  );
+  console.log(` estimate MAX Tx Fee:${estimateMaxTxFee} (${estimateMaxTxFeeETH} ${assetId})`);
 
   // gasHex
   const gasHex = await web3_alchemy.utils.toHex(setGasLimit);
@@ -144,17 +135,12 @@ async function _createVaultAccounts(assetId, vaultAccountNamePrefix) {
   let vault;
   let vaultWallet;
 
-  vaultRes = await fireblocks.createVaultAccount(
-    vaultAccountNamePrefix.toString()
-  );
+  vaultRes = await fireblocks.createVaultAccount(vaultAccountNamePrefix.toString());
   vault = {
     vaultName: vaultRes.name,
     vaultID: vaultRes.id,
   };
-  vaultWallet = await fireblocks.createVaultAsset(
-    Number(vault.vaultID),
-    assetId
-  );
+  vaultWallet = await fireblocks.createVaultAsset(Number(vault.vaultID), assetId);
   return { vault, vaultWallet };
 }
 
@@ -164,10 +150,7 @@ async function _createVaultAsset(vaultId, assetId) {
 }
 
 async function createVault(assetId, accountName, tokenId) {
-  const { vault, vaultWallet } = await _createVaultAccounts(
-    assetId,
-    accountName
-  );
+  const { vault, vaultWallet } = await _createVaultAccounts(assetId, accountName);
   await _createVaultAsset(vault.vaultID, tokenId);
 
   console.log(
@@ -247,9 +230,7 @@ async function mintToken(target_addr, amount) {
 
 async function registCardId(cardId, vaultAddr) {
   try {
-    console.log(
-      `registCardId::registry.methods.addId : cardId=${cardId}, vaultAddr=${vaultAddr}`
-    );
+    console.log(`registCardId::registry.methods.addId : cardId=${cardId}, vaultAddr=${vaultAddr}`);
     const tx = registry.methods.addId(cardId, vaultAddr);
     const receipt = await sendTx(REGISTRY_CA, tx, SO_ADDR, 1000000);
     console.log(`registCardId::receipt::`, receipt);
@@ -262,9 +243,7 @@ async function registCardId(cardId, vaultAddr) {
 
 async function getAddressByCardId(cardId) {
   try {
-    console.log(
-      `getAddressByCardId::registry.methods.getId : cardId=${cardId}`
-    );
+    console.log(`getAddressByCardId::registry.methods.getId : cardId=${cardId}`);
     const result = await registry_alc.methods.getMapAddress(cardId).call();
     //const result = await registry.methods.idMap(cardId).call();
     console.log(`result type: ${typeof result}`);
@@ -288,41 +267,31 @@ async function sleepForSeconds(amount) {
 
 async function createVaultAndMint(cardId, name) {
   // step 1-1A : create vault
-  console.log(
-    "step 1-1A : create vault--------------------------------------------"
-  );
+  console.log("step 1-1A : create vault--------------------------------------------");
   const resVault = await createVault(BASE_ASSET_ID, name, TOKEN_ASSET_ID);
   console.log("createVaultAndMint:resVault::", resVault);
   await sleepForSeconds(0.2);
 
   // step 1-1B : vaults bulk insert
-  console.log(
-    "step 1-1B : vaults bulk insert--------------------------------------"
-  );
+  console.log("step 1-1B : vaults bulk insert--------------------------------------");
   const resInsert = await bulkInsertVault(resVault);
   console.log("createVaultAndMint:resInsert::", resInsert.data);
   await sleepForSeconds(0.2);
 
   // step 1-1C : mint token
-  console.log(
-    "step 1-1C : mint token----------------------------------------------"
-  );
+  console.log("step 1-1C : mint token----------------------------------------------");
   const resApi = await mintToken(resVault.address, 1000);
   console.log("createVaultAndMint:resApi::", resApi.data);
   await sleepForSeconds(0.2);
 
   // step 1-1D : regist cardId
-  console.log(
-    "step 1-1D : regist cardId-------------------------------------------"
-  );
+  console.log("step 1-1D : regist cardId-------------------------------------------");
   const resTx = await registCardId(cardId, resVault.address);
   console.log("createVaultAndMint:resTx:: PASS");
   await sleepForSeconds(0.2);
 
   // step 1-1E : check registry
-  console.log(
-    "step 1-1E : check registry-----------------------------------------"
-  );
+  console.log("step 1-1E : check registry-----------------------------------------");
   const resTx2 = await getAddressByCardId(cardId);
   console.log("createVaultAndMint:resTx2:: PASS");
   await sleepForSeconds(0.2);
@@ -338,5 +307,5 @@ async function createVaultAndMint(cardId, name) {
   console.log("Done!");
 })().catch((e) => {
   console.error(`Failed: ${e}`);
-  exit(-1);
+  process.exit(-1);
 });
