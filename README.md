@@ -336,8 +336,13 @@ npx hardhat verify --network amoy_metamask 0x990C6E8d693577D1eD2F1F7a1CC2FAE4EB7
 
 ```bash
 
-## install
-npx projen new awscdk-app-ts
+## build
+cd PPBS-stack/
+./deployTool01_make.sh
+./deployTool02_npm.sh
+
+## install(不要)
+#npx projen new awscdk-app-ts
 
 ## set up environment
 npx cdk bootstrap
