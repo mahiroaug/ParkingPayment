@@ -378,6 +378,15 @@ curl -w "\n%{http_code}\n" \
 201
 ```
 
+Back サーバがやってること
+
+- Client からリクエストを受け付ける（主な引数はカード ID）
+- Fireblocks で Vault を生成し、vaultID と address を払い出す
+- vaultID と address の対応情報を Gas Station に登録する
+- Client にレスポンスを返す（ラウンドトリップタイム目標 5 秒）
+- address に 1000PPC を mint する
+- カード ID と address の対応情報を Registry コントラクトに書き込む
+
 ```mermaid
 sequenceDiagram
 
@@ -440,6 +449,15 @@ curl -w "\n%{http_code}\n" \
 }
 201
 ```
+
+Back サーバがやってること
+
+- Client からリクエストを受け付ける（引数はカード ID）
+- Registry コントラクトに問い合わせて address を入手する
+- Client にレスポンスを返す（ラウンドトリップタイム目標 3 秒）
+- address から ParkPayment コントラクトに 600PPC の allowance を与える
+- address から ParkPayment コントラクトに利用登録(デポジット)を行う
+- ParkPayment コントラクトは address から 600PPC を受け取る
 
 ```mermaid
 sequenceDiagram
