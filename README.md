@@ -19,8 +19,8 @@
   - [3.3. Polygonscan verify](#33-polygonscan-verify)
 - [4. cdk](#4-cdk)
 - [5. API](#5-api)
-  - [5.1. STEP1 Create Vault and Mint](#51-step1-create-vault-and-mint)
-  - [5.2. STEP2 Deposit](#52-step2-deposit)
+  - [5.1. Task1 Create Vault and Mint](#51-task1-create-vault-and-mint)
+  - [5.2. Task2 Deposit](#52-task2-deposit)
 
 # 1. スマ婚要件
 
@@ -66,27 +66,28 @@
 
 ```mermaid
 sequenceDiagram
-  actor User as User
-  actor PO as ParkingOwner
-  actor ServiceOwner as ServiceOwner
+  actor User as Alice<br>(User)
+  actor PO as Bob<br>(ParkingOwner)
+  actor ServiceOwner as Carol<br>(ServiceOwner)
   participant PP as ParkPayment
   participant Token as ERC20Token
   participant Event as Event
 
   autonumber
-  Note over User: deposit
+  Note right of User: deposit
   User ->>+ PP: deposit()
   PP ->>+ Token: transferFrom(--> ParkPayment)
   PP -->>- Event: DepositMade
-  Note over PO: Entry
+  Note left of PO: Entry
   PO ->>+ PP: Entry(User)
   PP -->>- Event: EntryRecorded
-  Note over PO: Exit
+  Note left of PO: Exit
   PO ->>+ PP: Exit(User)
-  PP ->>+ Token: transfer(parking Fee --> P0)
-  PP ->>+ Token: transfer(system Fee --> SO)
+  Note over PP: 料金自動計算
+  PP ->>+ Token: transfer(parking Fee --> Bob)
+  PP ->>+ Token: transfer(system Fee --> Carol)
   PP -->>- Event: ExitRecorded
-  Note over User: withdraw
+  Note right of User: withdraw
   User ->>+ PP: withdraw()
   PP ->>+ Token: transfer(--> User)
   PP -->>- Event: FundsWithdrawn
@@ -349,7 +350,7 @@ npx projen deploy
 
 # 5. API
 
-## 5.1. STEP1 Create Vault and Mint
+## 5.1. Task1 Create Vault and Mint
 
 ```bash
 
@@ -415,7 +416,7 @@ sequenceDiagram
     Note left of Back:ここまで１分強
 ```
 
-## 5.2. STEP2 Deposit
+## 5.2. Task2 Deposit
 
 ```bash
 
@@ -461,7 +462,7 @@ sequenceDiagram
 
     Note left of Back:ここまで数秒
 
-    Back->>+GSN: PermitSpender(address, ParkPayment 600PPC)
+    Back->>+GSN: Permit(address, ParkPayment 600PPC)
     GSN-->>-Back: result
     GSN->>+PPC: Meta transaction(ERC2612)
     Note over PPC: permit(address, ParkPayment 600PPC)
