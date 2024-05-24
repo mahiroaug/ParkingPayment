@@ -18,7 +18,7 @@
   - [3.2. Token](#32-token)
   - [3.3. Polygonscan verify](#33-polygonscan-verify)
 - [4. cdk](#4-cdk)
-- [5. API test](#5-api-test)
+- [5. API](#5-api)
   - [5.1. STEP1 Create Vault and Mint](#51-step1-create-vault-and-mint)
   - [5.2. STEP2 Deposit](#52-step2-deposit)
 
@@ -347,7 +347,7 @@ npx projen deploy
 
 ```
 
-# 5. API test
+# 5. API
 
 ## 5.1. STEP1 Create Vault and Mint
 
@@ -377,6 +377,44 @@ curl -w "\n%{http_code}\n" \
 201
 ```
 
+```mermaid
+sequenceDiagram
+
+    participant Client as Client
+    participant Back as Back Server<br>(AWS)
+    participant GSN as Gas Station<br>(AWS + Fireblocks)
+    participant FB as Fireblocks
+    participant PPC as ParkPayCoin<br>(PPC)
+    participant Registry
+    participant Event
+    autonumber
+
+    Client->>+Back: createVandM(cardId, name)
+    Back->>FB: createVault(BASE_ASSET_ID, name)
+    FB-->>Back: res(vaultId,address)
+    Back->>GSN: bulkInsert(vaultId,address)
+    GSN-->>Back: res(登録OKでーす)
+    Back-->>-Client: response(address)
+
+    Note left of Back:ここまで数秒
+
+    Back->>+GSN: mint(address, 1000PPC)
+    GSN-->>-Back: res
+    GSN->>+PPC: Meta transaction(ERC2771)
+    Note over PPC: mint(to address for 1000PPC)
+    PPC-->>-GSN: resTx
+
+    Note left of Back:ここまで１分弱
+
+    Back->>FB: registId(cardId, address)
+    FB->>+Registry: transaction
+    Note over Registry: registId(cardId, address)
+    Registry->>Event: IdAdded(id, addr)
+    Registry-->>-FB: resTx
+    FB-->>Back: res
+    Note left of Back:ここまで１分強
+```
+
 ## 5.2. STEP2 Deposit
 
 ```bash
@@ -400,4 +438,46 @@ curl -w "\n%{http_code}\n" \
   }
 }
 201
+```
+
+```mermaid
+sequenceDiagram
+
+    participant Client as Client
+    participant Back as Back Server<br>(AWS)
+    participant GSN as Gas Station<br>(AWS + Fireblocks)
+    participant FB as Fireblocks
+    participant PPC as ParkPayCoin<br>(PPC)
+    participant Registry
+    participant ParkPayment
+    participant Event
+    autonumber
+
+    Client->>+Back: Deposit(cardId)
+    Back->>+Registry: call(carId)
+    Note over Registry: getMapAddress(cardId)
+    Registry-->>-Back: res(address)
+
+    Note left of Back:ここまで数秒
+
+    Back->>+GSN: PermitSpender(address, ParkPayment 600PPC)
+    GSN-->>-Back: result
+    GSN->>+PPC: Meta transaction(ERC2612)
+    Note over PPC: permit(address, ParkPayment 600PPC)
+    PPC-->>-GSN: resTx
+
+    Note left of Back:ここまで１分弱
+
+    Back->>+GSN: Deposit(address, PO, 600PPC)
+    GSN-->>-Back: result
+    GSN->>+ParkPayment: Meta transaction(ERC2612)
+    Note over ParkPayment: Deposit(address, PO, 600PPC)
+    ParkPayment->>+PPC: tranfserFrom(600PPC)
+    Note over PPC: tranfserFrom(ParkPayment 600PPC)
+    PPC-->>-ParkPayment: result
+    ParkPayment->>Event: DepositMade
+    ParkPayment-->>-GSN: resTx
+
+    Note left of Back:ここまで90秒弱
+
 ```

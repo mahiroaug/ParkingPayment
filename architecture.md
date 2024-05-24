@@ -1,28 +1,41 @@
 ```mermaid
 sequenceDiagram
-    participant Frontend
-    participant Back as Back Server
-    participant GSN as Gas Station
-    participant Fireblocks
+
+    participant Client as Client
+    participant Back as Back Server<br>(AWS)
+    participant GSN as Gas Station<br>(AWS + Fireblocks)
+    participant FB as Fireblocks
+    participant PPC as ParkPayCoin<br>(PPC)
     participant Registry
+    participant ParkPayment
+    participant Event
+    autonumber
 
-    Frontend->>Back: createVaultAndMint(cardId, name)
-    Note left of Back: step1. create vault
-    Back->>Fireblocks: createVault(BASE_ASSET_ID, name, TOKEN_ASSET_ID)
-    Fireblocks-->>Back: resVault
+    Client->>+Back: Deposit(cardId)
+    Back->>+Registry: call(carId)
+    Note over Registry: getMapAddress(cardId)
+    Registry-->>-Back: res(address)
 
-    Back->>Back: log "step 1-1B : vaults bulk insert"
-    Back->>GSN: bulkInsertVault(resVault)
-    GSN-->>Back: resInsert
+    Note left of Back:ここまで数秒
 
-    Back->>Frontend: return
+    Back->>+GSN: PermitSpender(address, ParkPayment 600PPC)
+    GSN-->>-Back: result
+    GSN->>+PPC: Meta transaction(ERC2612)
+    Note over PPC: permit(address, ParkPayment 600PPC)
+    PPC-->>-GSN: resTx
 
-    Back->>Back: log "step 1-1C : mint token"
-    Back->>GSN: mintToken(resVault.address, 1000)
-    GSN-->>Back: resGSN
+    Note left of Back:ここまで１分弱
 
-    Back->>Back: log "step 1-1D : regist cardId"
-    Back->>Registry: registCardId(cardId, resVault.address)
-    Registry-->>Back: resTx
+    Back->>+GSN: Deposit(address, PO, 600PPC)
+    GSN-->>-Back: result
+    GSN->>+ParkPayment: Meta transaction(ERC2612)
+    Note over ParkPayment: Deposit(address, PO, 600PPC)
+    ParkPayment->>+PPC: tranfserFrom(600PPC)
+    Note over PPC: tranfserFrom(ParkPayment 600PPC)
+    PPC-->>-ParkPayment: result
+    ParkPayment->>Event: DepositMade
+    ParkPayment-->>-GSN: resTx
+
+    Note left of Back:ここまで90秒弱
 
 ```
