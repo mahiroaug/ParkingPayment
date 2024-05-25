@@ -7,10 +7,7 @@ require("@openzeppelin/hardhat-upgrades");
 
 const fs = require("fs");
 const path = require("path");
-const fb_apiSecret = fs.readFileSync(
-  path.resolve("fireblocks_secret_SIGNER.key"),
-  "utf8"
-);
+const fb_apiSecret = fs.readFileSync(path.resolve("fireblocks_secret_SIGNER.key"), "utf8");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -22,7 +19,7 @@ module.exports = {
         //apiBaseUrl: process.env.FIREBLOCKS_URL,
         privateKey: fb_apiSecret,
         apiKey: process.env.FIREBLOCKS_API_KEY_SIGNER,
-        vaultAccountIds: process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_DEPLOYER,
+        vaultAccountIds: process.env.FIREBLOCKS_VID_DEPLOYER,
       },
     },
     amoy: {
@@ -31,7 +28,7 @@ module.exports = {
         //apiBaseUrl: process.env.FIREBLOCKS_URL,
         privateKey: fb_apiSecret,
         apiKey: process.env.FIREBLOCKS_API_KEY_SIGNER,
-        vaultAccountIds: process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_DEPLOYER,
+        vaultAccountIds: process.env.FIREBLOCKS_VID_DEPLOYER,
       },
     },
     amoy_contractUpgrade: {
@@ -40,7 +37,7 @@ module.exports = {
         //apiBaseUrl: process.env.FIREBLOCKS_URL,
         privateKey: fb_apiSecret,
         apiKey: process.env.FIREBLOCKS_API_KEY_SIGNER,
-        vaultAccountIds: process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_CONTRACTOWNER,
+        vaultAccountIds: process.env.FIREBLOCKS_VID_CONTRACTOWNER,
       },
     },
     amoy_metamask: {

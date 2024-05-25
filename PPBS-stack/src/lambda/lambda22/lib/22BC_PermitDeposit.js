@@ -1,5 +1,6 @@
 // -------------------LIB------------------ //
 const SecretsManager = require("lib/secretsManager_v3.js");
+const vaultsRaw = require("lib/.env.vaults");
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
@@ -30,14 +31,14 @@ const apiKey = process.env.API_GATEWAY_APIKEY;
 const apiUrl = process.env.API_GATEWAY_URL;
 const apiUrl_ERC2771 = `${apiUrl}/raw/token/ERC2771`;
 const apiUrl_ERC2612Permit = `${apiUrl}/raw/token/ERC2612Permit`;
-const DOMAIN_NAME = process.env.DOMAIN_SEPARATOR_PARAM_NAME_TOKEN;
-const DOMAIN_VERSION = process.env.DOMAIN_SEPARATOR_PARAM_VERSION_TOKEN;
+const DOMAIN_NAME = process.env.DOMAIN_SEPARATOR_NAME_TOKEN;
+const DOMAIN_VERSION = process.env.DOMAIN_SEPARATOR_VERSION_TOKEN;
 const DOMAIN_VERIFYINGCONTRACT = process.env.TOKENPROXY_CA;
 
 ///// vaults
-const PO_ADDR = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_PARKOWNER_ADDR;
-const SO_ADDR = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR;
-const SO_ID = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER;
+const parkingOwners = vaultsRaw.minters;
+const SO_ADDR = process.env.FIREBLOCKS_VID_SERVICEOWNER_ADDR;
+const SO_ID = process.env.FIREBLOCKS_VID_SERVICEOWNER;
 
 //// fireblocks
 const chainId = ChainId.POLYGON_AMOY; // Polygon Testnet(amoy)
@@ -239,15 +240,24 @@ async function _Deposit02(requsetParam) {
 async function Deposit(from_addr) {
   await init_ENV();
 
+  // park address(parking owner address)
+  const source = from_addr;
+  const poIndex = parseInt(source.slice(-1), 16) % 8;
+  const po_addr = parkingOwners[poIndex].address;
+
+  // deposit amount
   const amount = 600;
   const weiAmount = await web3_alchemy.utils.toWei(amount.toString(), "ether");
 
+  // set request param
   const requestParam = {
     from_addr: from_addr,
-    park_addr: PO_ADDR,
+    park_addr: po_addr,
     token_addr: TOKEN_CA,
     amount: weiAmount,
   };
+
+  // check requestParam
   console.log("Deposit:requestParam::", requestParam);
   if (
     !requestParam.from_addr ||
@@ -259,6 +269,7 @@ async function Deposit(from_addr) {
     return;
   }
 
+  // call Deposit02
   await _Deposit02(requestParam);
 }
 

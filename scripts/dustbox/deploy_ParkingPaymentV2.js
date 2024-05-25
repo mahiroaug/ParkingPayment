@@ -10,8 +10,7 @@ async function main() {
   console.log("current PARKINGPAYMENTPROXY_CA = ", PARKINGPAYMENTPROXY_CA);
   console.log("current FORWARDER_CA           = ", FORWARDER_CA);
 
-  const ServiceOwner =
-    process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR;
+  const ServiceOwner = process.env.FIREBLOCKS_VID_SERVICEOWNER_ADDR;
 
   //-----------------------------------------------------------------
   // ParkingPayment
@@ -54,18 +53,12 @@ async function main() {
   const tx = await Proxy.upgradeToAndCall(parkingPaymentV2_CA, data);
   //const tx = await Proxy.upgradeTo(parkingPaymentV2_CA);
   await tx.wait();
-  console.log(
-    "ParkingPayment has been upgraded to a new version at:",
-    parkingPaymentv2.target
-  );
+  console.log("ParkingPayment has been upgraded to a new version at:", parkingPaymentv2.target);
   console.log("proxy addr = ", proxy.address);
 
   // check
   const ratePerMinute = await Proxy.ratePerMinute();
-  console.log(
-    "ParkingPayment_Proxy ratePerMinute = ",
-    ratePerMinute.toString()
-  );
+  console.log("ParkingPayment_Proxy ratePerMinute = ", ratePerMinute.toString());
 }
 
 main()

@@ -2,10 +2,10 @@
   - [1.1. エンティティ](#11-エンティティ)
   - [1.2. コントラクト仕様](#12-コントラクト仕様)
     - [1.2.1. ## STEP1 全般](#121--step1-全般)
-    - [1.2.2. ## STEP2 事前登録＆デポジット](#122--step2-事前登録デポジット)
+    - [1.2.2. ## STEP2 事前利用契約＆デポジット](#122--step2-事前利用契約デポジット)
     - [1.2.3. ## STEP3 入庫時](#123--step3-入庫時)
     - [1.2.4. ## STEP4 出庫時](#124--step4-出庫時)
-    - [1.2.5. ## STEP5 預託終了](#125--step5-預託終了)
+    - [1.2.5. ## STEP5 デポジット引き出し](#125--step5-デポジット引き出し)
     - [1.2.6. ##シーケンス図 (ParkingPayment)](#126-シーケンス図-parkingpayment)
   - [1.3. その他のコントラクト](#13-その他のコントラクト)
     - [1.3.1. Registry](#131-registry)
@@ -37,35 +37,38 @@
 ### 1.2.1. ## STEP1 全般
 
 - このコントラクトは任意の ERC-20 トークンを扱うことができる
-- コントラクトはパーキング管理者リスト(Bob など)を保有する
-- コントラクトはパーキング入庫状態(Alice など)を保有する
+- このコントラクトはパーキング管理者リスト(Bob など)を保有する
+- このコントラクトはパーキング入庫状態(Alice など)を保有する
 - Carol はパーキング管理者リストに Bob を登録または削除することができる
 - Carol は料金レート(1 分あたりの単価)を指定・更新することができる
 - Bob は Alice の入庫および出庫を記録することができる
 
-### 1.2.2. ## STEP2 事前登録＆デポジット
+### 1.2.2. ## STEP2 事前利用契約＆デポジット
 
 - Alice は事前に預託金として任意のトークンをコントラクトにデポジットする
 - このとき、Alice は Bob を指名しておく必要がある
-- 続けて Alice は別種のトークンをデポジットすることもできる。再び Bob を指名しても良いし、別のパーキング管理者を指名しても良いが、その場合は Bob の指名は上書きされる。
-- ALice は必要に応じて同じトークンを追加デポジットすることもできる。
+- ALice は必要に応じて同じトークンを追加デポジットすることもできる
+- さらに Alice は別種のトークンを追加デポジットすることもできる
+- 追加デポジットの際に再び Bob を指名しても良いし、別のパーキング管理者を指名しても良いが、後者の場合は Bob の指名は上書きされる
 - Alice のデポジットは一定期間（仮に 1 カ月とする）ロックされ、その間 Alice はこれを引き出すことができない
 
 ### 1.2.3. ## STEP3 入庫時
 
 - Alice が Bob の駐車場に入庫したとき、Bob はコントラクトに「Alice が入庫した」ことを記録する
+- Alice のデポジット残高が 0 だった場合は上記の入庫処理は最初までリバート（切り戻し）する。すなわち Alice はデポジット残高を有しない限りコントラクト上は入庫扱いとならない
 
 ### 1.2.4. ## STEP4 出庫時
 
 - Alice が Bob の駐車場を出庫したとき、Bob はコントラクトに「Alice が出庫した」ことを記録する
-- このとき、コントラクトは Alice が滞在した時間(分)に料金レートを乗じた駐車料金を自動算出し、駐車料金からシステム手数料（仮に３％とする）を差し引いた分を Bob に送金し、システム手数料は Carol に送金する。最後にこれらに相当する金額を Alice のデポジット分から差し引くことで清算を完了する
-- Alice のデポジット残高が不足している場合はリバートとなる（すなわち Alice は追加のデポジットを投入しない限り出庫できない）
+- このとき、コントラクトは Alice が滞在した時間(分)に料金レートを乗じた駐車料金を自動算出し、駐車料金からシステム手数料（仮に３％とする）を差し引いた分を Bob に送金し、残りのシステム手数料は Carol に送金する。最後にこれらに相当する金額を Alice のデポジット分から差し引くことで清算を完了する
+- Alice のデポジット残高が精算額に満たない場合は上記の出庫処理は最初までリバート（切り戻し）する。すなわち Alice は不足分のデポジットを追加投入しない限りコントラクト上は出庫できない
 
-### 1.2.5. ## STEP5 預託終了
+### 1.2.5. ## STEP5 デポジット引き出し
 
-- ロック期間経過後、Alice はデポジット残高を Alice のアドレスへ引き出すことができる。これはトークンの種類ごとに実行することができる
-- ただし Alice が「入庫状態」のときは、Alice はこれを引き出すことはできない
-- Carol はコントラクトオーナーの特権として、ロック期間満了の有無や入庫状態の有無によらず、いつでも Alice のデポジット残高を Alice のアドレスへ引き戻すことができる
+- ロック期間経過後は、Alice は自身の判断に基づき、デポジット残高を Alice のアドレスへ引き出すことができる。これはトークンの種類ごとに実行することができる
+- この処理は Alice が「出庫状態」にあるときのみ実行することができる。「入庫状態」であれば処理は最初までリバート（切り戻し）する
+- Alice が全ての種類のトークンを引き出した時点で Bob への指名も自動的に解除される
+- Carol だけはコントラクトオーナーの特権として、ロック期間満了の有無や Alice の入庫状態の有無によらず、いつでも Alice のデポジット残高を Alice のアドレスへ引き戻すことができる（緊急避難措置）
 
 ### 1.2.6. ##シーケンス図 (ParkingPayment)
 
@@ -105,6 +108,8 @@ sequenceDiagram
 ### 1.3.1. Registry
 
 ユーザ ID と address 情報を紐付け保存しておくコントラクト
+
+> （ユーザ ID ってのは有り体に言うと「NFC カード番号」とか「自動車のナンバープレート（のハッシュ）」とかのいい感じに個人情報を回避してる識別子。ぶっちゃけユニークな string であればなんでもいい。ブロックチェーンをデータベース化してみたいというモチベーションだけなのだァ！過程や！方法なぞ……！どうでもよいのだァーーッ）
 
 ```mermaid
 sequenceDiagram
@@ -185,10 +190,10 @@ METAMASK_ADDR_METAMASK=******
 
 #### ------- hardhat ------------------- #####
 #DomainSeparator parameter
-DOMAIN_SEPARATOR_PARAM_NAME=MyForwarderDomain
-DOMAIN_SEPARATOR_PARAM_VERSION=1
-DOMAIN_SEPARATOR_PARAM_NAME_TOKEN=ParkPayCoinV2
-DOMAIN_SEPARATOR_PARAM_VERSION_TOKEN=1
+DOMAIN_SEPARATOR_NAME=MyForwarderDomain
+DOMAIN_SEPARATOR_VERSION=1
+DOMAIN_SEPARATOR_NAME_TOKEN=ParkPayCoinV2
+DOMAIN_SEPARATOR_VERSION_TOKEN=1
 #Polygonscan
 POLYGONSCAN_API_KEY=******
 
@@ -213,8 +218,8 @@ JSTv2_API_KEY=******
 #### --------- GSN --------------------- #####
 API_GATEWAY_APIKEY=******
 API_GATEWAY_URL=https://******.execute-api.ap-northeast-1.amazonaws.com/v1
-DOMAIN_SEPARATOR_PARAM_NAME_TOKEN=ParkPayCoinV2
-DOMAIN_SEPARATOR_PARAM_VERSION_TOKEN=1
+DOMAIN_SEPARATOR_NAME_TOKEN=ParkPayCoinV2
+DOMAIN_SEPARATOR_VERSION_TOKEN=1
 ## psql -h dbproxy-amppc.proxy-******.ap-northeast-1.rds.amazonaws.com -U postgres -d jstv2db
 
 #### ------ fireblocks ---------------- #####
@@ -223,16 +228,16 @@ DOMAIN_SEPARATOR_PARAM_VERSION_TOKEN=1
 ## API
 FIREBLOCKS_API_KEY_SIGNER=******
 FIREBLOCKS_URL=https://api.fireblocks.io
-FIREBLOCKS_VAULT_ACCOUNT_ID=22 # ALICE
-FIREBLOCKS_VAULT_ACCOUNT_ID_TARGET=23 #BOB
-FIREBLOCKS_VAULT_ACCOUNT_ID_RELAYER=24 # RAY
-FIREBLOCKS_VAULT_ACCOUNT_ID_DEPLOYER=24 # RAY
-FIREBLOCKS_VAULT_ACCOUNT_ID_CONTRACTOWNER=24 # contract owner
-FIREBLOCKS_VAULT_ACCOUNT_ID_CONTRACTOWNER_ADDR=0x46FA7F84edcED825F8F8E237fbf1B8C5954C2E0E
-FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER=24
-FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR=0x46FA7F84edcED825F8F8E237fbf1B8C5954C2E0E
-FIREBLOCKS_VAULT_ACCOUNT_ID_PARKOWNER=39 # ELEN
-FIREBLOCKS_VAULT_ACCOUNT_ID_PARKOWNER_ADDR=0x3F0996d182aB9c1942b7b46dAb35e5eEc154fD75
+FIREBLOCKS_VID=22 # ALICE
+FIREBLOCKS_VID_TARGET=23 #BOB
+FIREBLOCKS_VID_RELAYER=24 # RAY
+FIREBLOCKS_VID_DEPLOYER=24 # RAY
+FIREBLOCKS_VID_CONTRACTOWNER=24 # contract owner
+FIREBLOCKS_VID_CONTRACTOWNER_ADDR=0x46FA7F84edcED825F8F8E237fbf1B8C5954C2E0E
+FIREBLOCKS_VID_SERVICEOWNER=24
+FIREBLOCKS_VID_SERVICEOWNER_ADDR=0x46FA7F84edcED825F8F8E237fbf1B8C5954C2E0E
+FIREBLOCKS_VID_PARKOWNER=39 # ELEN
+FIREBLOCKS_VID_PARKOWNER_ADDR=0x3F0996d182aB9c1942b7b46dAb35e5eEc154fD75
 FIREBLOCKS_ASSET_ID=AMOY_POLYGON_TEST
 FIREBLOCKS_ASSET_ID_MYTOKEN=PPC_AMOY_POLYGON_TEST_TAB5
 POLYGON_RPC_URL=https://rpc.ankr.com/polygon_amoy
@@ -477,7 +482,6 @@ sequenceDiagram
     participant Client as Client
     participant Back as Back Server<br>(AWS)
     participant GSN as Gas Station<br>(AWS + Fireblocks)
-    participant FB as Fireblocks
     participant PPC as ParkPayCoin<br>(PPC)
     participant Registry
     participant ParkPayment
@@ -531,7 +535,7 @@ sequenceDiagram
 
     participant Client as Client
     participant Back as Back Server<br>(AWS)
-    participant FB as Fireblocks
+    participant FB as Gas Station<br>(AWS + Fireblocks)
     participant Registry
     participant ParkPayment
     participant PPC as PPC<br>(ParkPayCoin)
@@ -551,7 +555,7 @@ sequenceDiagram
     Note left of Back:ここまで数秒
 
     Back->>+FB: Entry(address)
-    FB->>+ParkPayment: transaction
+    FB->>+ParkPayment: Meta transaction(ERC2771)
     Note over ParkPayment: Entry(address)
     ParkPayment->>Event: EntryRecorded(address,timestamp)
     ParkPayment-->>-FB: resTx

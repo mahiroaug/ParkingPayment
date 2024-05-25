@@ -20,8 +20,8 @@ const apiUrl = process.env.API_GATEWAY_URL;
 const apiUrl_registVault = `${apiUrl}/vaults/bulkInsert`;
 const apiUrl_ERC2771 = `${apiUrl}/raw/token/ERC2771`;
 const apiUrl_ERC2612Permit = `${apiUrl}/raw/token/ERC2612Permit`;
-const DOMAIN_NAME = process.env.DOMAIN_SEPARATOR_PARAM_NAME_TOKEN;
-const DOMAIN_VERSION = process.env.DOMAIN_SEPARATOR_PARAM_VERSION_TOKEN;
+const DOMAIN_NAME = process.env.DOMAIN_SEPARATOR_NAME_TOKEN;
+const DOMAIN_VERSION = process.env.DOMAIN_SEPARATOR_VERSION_TOKEN;
 const DOMAIN_VERIFYINGCONTRACT = process.env.TOKENPROXY_CA;
 
 ///// vaults
@@ -36,15 +36,15 @@ const TOKEN_ABI = require("../artifacts/contracts/V21/JST_V21.sol/JST_V21.json")
 const PP_CA = process.env.PARKINGPAYMENTPROXY_CA;
 const PP_ABI =
   require("../artifacts/contracts/ParkingPayment/ParkingPayment.sol/ParkingPayment.json").abi;
-const PO_ADDR = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_PARKOWNER_ADDR;
-const PO_ID = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_PARKOWNER;
+const PO_ADDR = process.env.FIREBLOCKS_VID_PARKOWNER_ADDR;
+const PO_ID = process.env.FIREBLOCKS_VID_PARKOWNER;
 
 //// registry
 const REGISTRY_CA = process.env.NFCADDRESSREGISTRYPROXY_CA;
 const REGISTRY_ABI =
   require("../artifacts/contracts/NFCAddressRegistry/NFCAddressRegistry.sol/NFCAddressRegistry.json").abi;
-const SO_ADDR = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR;
-const SO_ID = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER;
+const SO_ADDR = process.env.FIREBLOCKS_VID_SERVICEOWNER_ADDR;
+const SO_ID = process.env.FIREBLOCKS_VID_SERVICEOWNER;
 
 //// explorer
 const EXPLOERE = process.env.EXPLOERE;
@@ -295,7 +295,7 @@ async function Entry(requsetParam) {
     balanceInParkingPayment = await getBalanceInParkingPaymentByUserAddress(user_addr, token_addr);
     console.log("Entry::balanceInParkingPayment::", balanceInParkingPayment);
     if (balanceInParkingPayment === null || balanceInParkingPayment < weiAmount) {
-      throw new Error("Error: Insufficient balance. Minimum required is 60 PPC.");
+      throw new Error("Error: Insufficient balance. Minimum required is 30 PPC.");
     }
   } catch (error) {
     console.error(`Error retrieving or validating balance: ${error.message}`);
@@ -328,7 +328,7 @@ async function Entry(requsetParam) {
 
 (async () => {
   await Entry({
-    cardId: "id-2116",
+    cardId: "id-2117",
     token_addr: TOKEN_CA,
   });
 

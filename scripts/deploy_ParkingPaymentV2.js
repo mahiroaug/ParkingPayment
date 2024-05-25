@@ -8,8 +8,7 @@ async function main() {
   console.log("current PARKINGPAYMENTPROXY_CA = ", PARKINGPAYMENTPROXY_CA);
   console.log("current FORWARDER_CA           = ", FORWARDER_CA);
 
-  const ServiceOwner =
-    process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR;
+  const ServiceOwner = process.env.FIREBLOCKS_VID_SERVICEOWNER_ADDR;
 
   //-----------------------------------------------------------------
   // ParkingPayment
@@ -38,10 +37,7 @@ async function main() {
 
   // check
   const ratePerMinute = await parkingPayment_Proxy.ratePerMinute();
-  console.log(
-    "ParkingPayment_Proxy ratePerMinute = ",
-    ratePerMinute.toString()
-  );
+  console.log("ParkingPayment_Proxy ratePerMinute = ", ratePerMinute.toString());
   const trustedForwarder = await parkingPayment_Proxy.trustedForwarder();
   console.log("ParkingPayment_Proxy trustedForwarder = ", trustedForwarder);
 

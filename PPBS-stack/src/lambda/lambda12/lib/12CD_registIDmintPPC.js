@@ -7,10 +7,7 @@ const axios = require("axios");
 const { Web3 } = require("web3");
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 const { FireblocksSDK } = require("fireblocks-sdk");
-const {
-  FireblocksWeb3Provider,
-  ChainId,
-} = require("@fireblocks/fireblocks-web3-provider");
+const { FireblocksWeb3Provider, ChainId } = require("@fireblocks/fireblocks-web3-provider");
 
 // -------------------CONTRACT------------------ //
 const region = process.env.AWS_REGION;
@@ -32,8 +29,8 @@ const apiUrl_ERC2771 = `${apiUrl}/raw/token/ERC2771`;
 
 ///// vaults
 const minters = vaultsRaw.minters;
-const SO_ADDR = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR;
-const SO_ID = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER;
+const SO_ADDR = process.env.FIREBLOCKS_VID_SERVICEOWNER_ADDR;
+const SO_ID = process.env.FIREBLOCKS_VID_SERVICEOWNER;
 
 //// fireblocks
 const chainId = ChainId.POLYGON_AMOY; // Polygon Testnet(amoy)
@@ -58,13 +55,8 @@ async function init_ENV() {
   try {
     // -------------------FIREBLOCKS SECRET KEY------------------- //
     const fb_apiSecret_secretName = "fireblocks_secret_SIGNER";
-    const fb_apiSecret_secret = await SecretsManager.getSecret(
-      fb_apiSecret_secretName,
-      region
-    );
-    console.log(
-      `${fb_apiSecret_secretName} : ${fb_apiSecret_secret.slice(0, 40)}`
-    );
+    const fb_apiSecret_secret = await SecretsManager.getSecret(fb_apiSecret_secretName, region);
+    console.log(`${fb_apiSecret_secretName} : ${fb_apiSecret_secret.slice(0, 40)}`);
 
     // -------------------FIREBLOCKS------------------- //
     //// fireblocks - SDK
@@ -119,9 +111,7 @@ const sendTx = async (_to, _tx, _signer, _gasLimit) => {
     estimateMaxTxFee.toString(),
     "ether"
   );
-  console.log(
-    ` estimate MAX Tx Fee:${estimateMaxTxFee} (${estimateMaxTxFeeETH} ${assetId})`
-  );
+  console.log(` estimate MAX Tx Fee:${estimateMaxTxFee} (${estimateMaxTxFeeETH} ${assetId})`);
 
   // gasHex
   const gasHex = await web3_alchemy.utils.toHex(setGasLimit);
@@ -197,9 +187,7 @@ async function mintToken(target_addr, amount) {
 
 async function registCardId(cardId, vaultAddr) {
   try {
-    console.log(
-      `registCardId::registry.methods.addId : cardId=${cardId}, vaultAddr=${vaultAddr}`
-    );
+    console.log(`registCardId::registry.methods.addId : cardId=${cardId}, vaultAddr=${vaultAddr}`);
     const tx = registry.methods.addId(cardId, vaultAddr);
     const receipt = await sendTx(REGISTRY_CA, tx, SO_ADDR, 1000000);
     console.log(`registCardId::receipt::`, receipt);
@@ -212,9 +200,7 @@ async function registCardId(cardId, vaultAddr) {
 
 async function getAddressByCardId(cardId) {
   try {
-    console.log(
-      `getAddressByCardId::registry.methods.getId : cardId=${cardId}`
-    );
+    console.log(`getAddressByCardId::registry.methods.getId : cardId=${cardId}`);
     const result = await registry_alc.methods.getMapAddress(cardId).call();
     //const result = await registry.methods.idMap(cardId).call();
     console.log(`result type: ${typeof result}`);
@@ -240,25 +226,19 @@ async function registIDmintPPC(cardId, address) {
   await init_ENV();
 
   // step 1-1C : mint token
-  console.log(
-    "step 1-1C : mint token----------------------------------------------"
-  );
+  console.log("step 1-1C : mint token----------------------------------------------");
   const resApi = await mintToken(address, 1000);
   console.log("createVaultAndMint:resApi::", resApi.data);
   await sleepForSeconds(60);
 
   // step 1-1D : regist cardId
-  console.log(
-    "step 1-1D : regist cardId-------------------------------------------"
-  );
+  console.log("step 1-1D : regist cardId-------------------------------------------");
   const resTx = await registCardId(cardId, address);
   console.log("createVaultAndMint:resTx:: ", resTx);
   await sleepForSeconds(0.2);
 
   // step 1-1E : check registry
-  console.log(
-    "step 1-1E : check registry-----------------------------------------"
-  );
+  console.log("step 1-1E : check registry-----------------------------------------");
   const resTx2 = await getAddressByCardId(cardId);
   console.log("createVaultAndMint:resTx2:: ", resTx2);
   await sleepForSeconds(0.2);

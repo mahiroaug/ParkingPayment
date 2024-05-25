@@ -25,19 +25,10 @@ const PP_CA = process.env.PARKINGPAYMENTPROXY_CA;
 const PP_ABI = require("lib/contracts/ParkingPayment/ParkingPaymentV2.sol/ParkingPayment.json").abi;
 
 // -------------------COMMON----------------------- //
-//// GSN
-const apiKey = process.env.API_GATEWAY_APIKEY;
-const apiUrl = process.env.API_GATEWAY_URL;
-const apiUrl_ERC2771 = `${apiUrl}/raw/token/ERC2771`;
-const apiUrl_ERC2612Permit = `${apiUrl}/raw/token/ERC2612Permit`;
-const DOMAIN_NAME = process.env.DOMAIN_SEPARATOR_PARAM_NAME_TOKEN;
-const DOMAIN_VERSION = process.env.DOMAIN_SEPARATOR_PARAM_VERSION_TOKEN;
-const DOMAIN_VERIFYINGCONTRACT = process.env.TOKENPROXY_CA;
 
 ///// vaults
-const PO_ADDR = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_PARKOWNER_ADDR;
-const SO_ADDR = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR;
-const SO_ID = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER;
+const SO_ADDR = process.env.FIREBLOCKS_VID_SERVICEOWNER_ADDR;
+const SO_ID = process.env.FIREBLOCKS_VID_SERVICEOWNER;
 
 //// fireblocks
 const chainId = ChainId.POLYGON_AMOY; // Polygon Testnet(amoy)
@@ -154,20 +145,12 @@ async function getAllowance(owner_addr, spender_addr) {
 ////// public functions /////////////////
 /////////////////////////////////////////
 
-async function _Deposit01(cardId) {
+async function _getRegistry01(cardId) {
   // step 1-1A : search from_addr
   console.log("step 1-1A : search from_addr-----------------------");
   const from_addr = await getAddressByCardId(cardId);
-  console.log("Deposit:from_addr::", from_addr);
+  console.log("_getRegistry01:from_addr::", from_addr);
   await sleepForSeconds(0.2);
-
-  /*
-  console.log("Deposit::from_addr::", from_addr, "--->>>Get Balance");
-  await getAccountBalance(from_addr);
-  console.log("Deposit::PP_CA::", PP_CA, "--->>>Get Balance");
-  await getAccountBalance(PP_CA);
-  await getAllowance(from_addr, PP_CA);
-  */
 
   return from_addr;
 }
@@ -179,7 +162,7 @@ async function _Deposit01(cardId) {
 async function getRegistry(cardId) {
   await init_ENV();
 
-  const from_addr = await _Deposit01(cardId);
+  const from_addr = await _getRegistry01(cardId);
   return from_addr;
 }
 

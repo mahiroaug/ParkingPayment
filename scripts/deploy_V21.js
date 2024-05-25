@@ -2,9 +2,9 @@ require("dotenv").config({ path: ".env" });
 const { ethers, upgrades } = require("hardhat");
 
 async function main() {
-  const TokenOwner = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_CONTRACTOWNER_ADDR;
-  const domainName = process.env.DOMAIN_SEPARATOR_PARAM_NAME;
-  const domainVersion = process.env.DOMAIN_SEPARATOR_PARAM_VERSION;
+  const TokenOwner = process.env.FIREBLOCKS_VID_CONTRACTOWNER_ADDR;
+  const domainName = process.env.DOMAIN_SEPARATOR_NAME;
+  const domainVersion = process.env.DOMAIN_SEPARATOR_VERSION;
 
   console.log("TokenOwner address = ", TokenOwner);
   console.log("domainName =         ", domainName);
@@ -25,9 +25,7 @@ async function main() {
   //-----------------------------------------------------------------
   // Forwarder
   //-----------------------------------------------------------------
-  const Forwarder = await ethers.getContractFactory(
-    "contracts/V21/Forwarder_V21.sol:Forwarder"
-  );
+  const Forwarder = await ethers.getContractFactory("contracts/V21/Forwarder_V21.sol:Forwarder");
   const forwarder = await Forwarder.deploy();
   await forwarder.waitForDeployment();
   console.log("Forwarder deployed to:    ", forwarder.target);
@@ -41,9 +39,7 @@ async function main() {
   //-----------------------------------------------------------------
   // JSTv21_Token
   //-----------------------------------------------------------------
-  const Token = await ethers.getContractFactory(
-    "contracts/V21/JST_V21.sol:JST_V21"
-  );
+  const Token = await ethers.getContractFactory("contracts/V21/JST_V21.sol:JST_V21");
 
   //-----------------------------------------------------------------
   // ERC1967 Proxy

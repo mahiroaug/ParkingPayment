@@ -2,7 +2,7 @@ require("dotenv").config({ path: ".env" });
 const { ethers } = require("hardhat");
 
 async function main() {
-  const SO = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR;
+  const SO = process.env.FIREBLOCKS_VID_SERVICEOWNER_ADDR;
 
   const FORWARDER_CA = process.env.FORWARDER_CA;
 
@@ -36,10 +36,7 @@ async function main() {
   console.log("erc1967Proxy addr = ", erc1967Proxy.target);
 
   // check
-  registry_Proxy = await ethers.getContractAt(
-    "NFCAddressRegistry",
-    erc1967Proxy.target
-  );
+  registry_Proxy = await ethers.getContractAt("NFCAddressRegistry", erc1967Proxy.target);
   console.log("registry_Proxy address = ", registry_Proxy.target);
 }
 

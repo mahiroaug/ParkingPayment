@@ -2,8 +2,7 @@ require("dotenv").config({ path: ".env" });
 const { ethers, upgrades } = require("hardhat");
 
 async function main() {
-  const ServiceOwner =
-    process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR;
+  const ServiceOwner = process.env.FIREBLOCKS_VID_SERVICEOWNER_ADDR;
 
   const FORWARDER_CA = process.env.FORWARDER_CA;
 
@@ -35,10 +34,7 @@ async function main() {
 
   // check
   const ratePerMinute = await parkingPayment_Proxy.ratePerMinute();
-  console.log(
-    "ParkingPayment_Proxy ratePerMinute = ",
-    ratePerMinute.toString()
-  );
+  console.log("ParkingPayment_Proxy ratePerMinute = ", ratePerMinute.toString());
   const trustedForwarder = await parkingPayment_Proxy.trustedForwarder();
   console.log("ParkingPayment_Proxy trustedForwarder = ", trustedForwarder);
 }

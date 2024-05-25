@@ -2,8 +2,7 @@ require("dotenv").config({ path: ".env" });
 const { ethers, upgrades } = require("hardhat");
 
 async function main() {
-  const ServiceOwner =
-    process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_SERVICEOWNER_ADDR;
+  const ServiceOwner = process.env.FIREBLOCKS_VID_SERVICEOWNER_ADDR;
 
   const FORWARDER_CA = process.env.FORWARDER_CA;
 

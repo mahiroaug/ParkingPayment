@@ -10,10 +10,7 @@ const {
   TransactionOperation,
   TransactionStatus,
 } = require("fireblocks-sdk");
-const {
-  FireblocksWeb3Provider,
-  ChainId,
-} = require("@fireblocks/fireblocks-web3-provider");
+const { FireblocksWeb3Provider, ChainId } = require("@fireblocks/fireblocks-web3-provider");
 //const { sign } = require('crypto');
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 
@@ -29,11 +26,9 @@ const rpcUrl = process.env.POLYGON_RPC_URL;
 const EXPLOERE = process.env.EXPLOERE;
 
 const TOKEN_CA = process.env.TOKENPROXY_CA;
-const TOKEN_ABI =
-  require("../artifacts/contracts/V21/JST_V21.sol/JST_V21.json").abi;
+const TOKEN_ABI = require("../artifacts/contracts/V21/JST_V21.sol/JST_V21.json").abi;
 const FORWARDER_CA = process.env.FORWARDER_CA;
-const FORWARDER_ABI =
-  require("../artifacts/contracts/V21/IForwarder_V21.sol/IForwarder.json").abi;
+const FORWARDER_ABI = require("../artifacts/contracts/V21/IForwarder_V21.sol/IForwarder.json").abi;
 const ASSETID = process.env.FIREBLOCKS_ASSET_ID;
 
 const EIP712_DOMAIN_TYPE =
@@ -41,22 +36,18 @@ const EIP712_DOMAIN_TYPE =
 const GENERIC_PARAMS =
   "address from,address to,uint256 value,uint256 gas,uint256 nonce,bytes data,uint256 validUntilTime";
 const REQUEST_TYPE = "ForwardRequest(" + GENERIC_PARAMS + ")";
-const DOMAIN_SEPARATOR_PARAM_NAME = process.env.DOMAIN_SEPARATOR_PARAM_NAME;
-const DOMAIN_SEPARATOR_PARAM_VERSION =
-  process.env.DOMAIN_SEPARATOR_PARAM_VERSION;
+const DOMAIN_SEPARATOR_NAME = process.env.DOMAIN_SEPARATOR_NAME;
+const DOMAIN_SEPARATOR_VERSION = process.env.DOMAIN_SEPARATOR_VERSION;
 
 // -------------------FIREBLOCKS------------------- //
 //// fireblocks - SDK
-const fb_apiSecret = fs.readFileSync(
-  path.resolve("fireblocks_secret_SIGNER.key"),
-  "utf8"
-);
+const fb_apiSecret = fs.readFileSync(path.resolve("fireblocks_secret_SIGNER.key"), "utf8");
 const fb_apiKey = process.env.FIREBLOCKS_API_KEY_SIGNER;
 const fb_base_url = process.env.FIREBLOCKS_URL;
 const fireblocks = new FireblocksSDK(fb_apiSecret, fb_apiKey, fb_base_url);
 
 //// fireblocks - web3 provider - signer account
-const fb_vaultId = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_CONTRACTOWNER;
+const fb_vaultId = process.env.FIREBLOCKS_VID_CONTRACTOWNER;
 const eip1193Provider = new FireblocksWeb3Provider({
   privateKey: fb_apiSecret,
   apiKey: fb_apiKey,
@@ -69,7 +60,7 @@ const token = new web3.eth.Contract(TOKEN_ABI, TOKEN_CA);
 const forwarder = new web3.eth.Contract(FORWARDER_ABI, FORWARDER_CA);
 
 //// fireblocks - web3 provider - relayer account
-const fb_vaultId_relayer = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_RELAYER;
+const fb_vaultId_relayer = process.env.FIREBLOCKS_VID_RELAYER;
 const eip1193Provider_withRelayer = new FireblocksWeb3Provider({
   privateKey: fb_apiSecret,
   apiKey: fb_apiKey,
@@ -78,14 +69,8 @@ const eip1193Provider_withRelayer = new FireblocksWeb3Provider({
   rpcUrl: rpcUrl,
 });
 const web3_withRelayer = new Web3(eip1193Provider_withRelayer);
-const token_withRelayer = new web3_withRelayer.eth.Contract(
-  TOKEN_ABI,
-  TOKEN_CA
-);
-const forwarder_withRelayer = new web3_withRelayer.eth.Contract(
-  FORWARDER_ABI,
-  FORWARDER_CA
-);
+const token_withRelayer = new web3_withRelayer.eth.Contract(TOKEN_ABI, TOKEN_CA);
+const forwarder_withRelayer = new web3_withRelayer.eth.Contract(FORWARDER_ABI, FORWARDER_CA);
 
 //// alchemy
 const alchemyHTTPS = process.env.ALCHEMY_HTTPS;
@@ -133,10 +118,7 @@ async function signEIP712Message(vaultAccountId, signRequest) {
   console.log("txinfo: ", txInfo);
 
   console.log(">>> result");
-  const walletAddresses = await fireblocks.getDepositAddresses(
-    vaultAccountId,
-    ASSETID
-  );
+  const walletAddresses = await fireblocks.getDepositAddresses(vaultAccountId, ASSETID);
   console.log("walletAddresses: ", walletAddresses);
   console.log("Address: ", walletAddresses[0].address);
   console.log("signRequest: ", signRequest);
@@ -212,25 +194,16 @@ async function getAccountBalance(address, web3provider) {
 
   // ETH Balance
   const balance = await web3provider.eth.getBalance(address);
-  console.log(
-    `Balance : ${web3provider.utils.fromWei(balance, "ether")} ${ASSETID}`
-  );
+  console.log(`Balance : ${web3provider.utils.fromWei(balance, "ether")} ${ASSETID}`);
 
   const web3provider_token = new web3provider.eth.Contract(TOKEN_ABI, TOKEN_CA);
 
   // token Balance
-  const coinBalance = await web3provider_token.methods
-    .balanceOf(address)
-    .call();
+  const coinBalance = await web3provider_token.methods.balanceOf(address).call();
   const coinName = await web3provider_token.methods.name().call();
   const coinSymbol = await web3provider_token.methods.symbol().call();
 
-  console.log(
-    `Balance : ${web3provider.utils.fromWei(
-      coinBalance,
-      "ether"
-    )} ${coinSymbol}`
-  );
+  console.log(`Balance : ${web3provider.utils.fromWei(coinBalance, "ether")} ${coinSymbol}`);
 }
 
 /////////////////////////////////////////
@@ -257,13 +230,7 @@ const sendTx = async (_to, _tx, _signer, _gasLimit) => {
     estimateMaxTxFee.toString(),
     "ether"
   );
-  console.log(
-    " estimate MAX Tx Fee:",
-    estimateMaxTxFee,
-    "(",
-    estimateMaxTxFeeETH,
-    "ETH)"
-  );
+  console.log(" estimate MAX Tx Fee:", estimateMaxTxFee, "(", estimateMaxTxFeeETH, "ETH)");
 
   const createReceipt = await web3_withRelayer.eth
     .sendTransaction({
@@ -354,10 +321,7 @@ async function sendTransferByForwarder(req, signature, payerAddr) {
 async function registerDomainSeparator(name, version, payerAddr) {
   try {
     console.log("registerDmainSeparator");
-    const tx = forwarder_withRelayer.methods.registerDomainSeparator(
-      name,
-      version
-    );
+    const tx = forwarder_withRelayer.methods.registerDomainSeparator(name, version);
     const receipt = await sendTx(FORWARDER_CA, tx, payerAddr, 2000000);
     console.log("registerDmainSeparator done!");
   } catch (error) {
@@ -378,15 +342,9 @@ async function sleepForSeconds(amount) {
 (async () => {
   console.log("-------- IMPLEMENT ---------");
   console.log(
-    `forwarder address: ${FORWARDER_CA}, verifying: ${
-      forwarder.options.address !== undefined
-    }`
+    `forwarder address: ${FORWARDER_CA}, verifying: ${forwarder.options.address !== undefined}`
   );
-  console.log(
-    `token address: ${TOKEN_CA}, verifying: ${
-      token.options.address !== undefined
-    }`
-  );
+  console.log(`token address: ${TOKEN_CA}, verifying: ${token.options.address !== undefined}`);
 
   ///////////////////////////////////////////////////////////////////////////////////
   // STEP1 signer create signature

@@ -10,10 +10,7 @@ const {
   TransactionOperation,
   TransactionStatus,
 } = require("fireblocks-sdk");
-const {
-  FireblocksWeb3Provider,
-  ChainId,
-} = require("@fireblocks/fireblocks-web3-provider");
+const { FireblocksWeb3Provider, ChainId } = require("@fireblocks/fireblocks-web3-provider");
 //const { sign } = require('crypto');
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 
@@ -22,7 +19,7 @@ const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 
 const vaultsRaw = require("../.env.vaults");
 const { exit } = require("process");
-const minters = vaultsRaw.minters;
+const parkingOwners = vaultsRaw.parkingOwners;
 
 const chainId = ChainId.POLYGON_AMOY; // Polygon Testnet(amoy)
 const rpcUrl = process.env.POLYGON_RPC_URL;
@@ -30,29 +27,25 @@ const EXPLOERE = process.env.EXPLOERE;
 
 //// token
 const TOKEN_CA = process.env.TOKENPROXY_CA;
-const TOKEN_ABI =
-  require("../artifacts/contracts/V21/JST_V21.sol/JST_V21.json").abi;
+const TOKEN_ABI = require("../artifacts/contracts/V21/JST_V21.sol/JST_V21.json").abi;
 
 //// parking payment
 const PP_CA = process.env.PARKINGPAYMENTPROXY_CA;
 const PP_ABI =
   require("../artifacts/contracts/ParkingPayment/ParkingPayment.sol/ParkingPayment.json").abi;
-const PO_ADDR = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_PARKOWNER_ADDR;
+const PO_ADDR = process.env.FIREBLOCKS_VID_PARKOWNER_ADDR;
 
 // -------------------FIREBLOCKS------------------- //
 //// fireblocks - SDK
-const fb_apiSecret = fs.readFileSync(
-  path.resolve("fireblocks_secret_SIGNER.key"),
-  "utf8"
-);
+const fb_apiSecret = fs.readFileSync(path.resolve("fireblocks_secret_SIGNER.key"), "utf8");
 const fb_apiKey = process.env.FIREBLOCKS_API_KEY_SIGNER;
 const fb_base_url = process.env.FIREBLOCKS_URL;
 const fireblocks = new FireblocksSDK(fb_apiSecret, fb_apiKey, fb_base_url);
 const assetId = process.env.FIREBLOCKS_ASSET_ID;
 
 //// fireblocks - web3 provider - signer account
-const CO_ADDR = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_CONTRACTOWNER_ADDR;
-const fb_vaultId = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_CONTRACTOWNER;
+const CO_ADDR = process.env.FIREBLOCKS_VID_CONTRACTOWNER_ADDR;
+const fb_vaultId = process.env.FIREBLOCKS_VID_CONTRACTOWNER;
 const eip1193Provider = new FireblocksWeb3Provider({
   privateKey: fb_apiSecret,
   apiKey: fb_apiKey,
@@ -91,9 +84,7 @@ const sendTx = async (_to, _tx, _signer, _gasLimit) => {
     estimateMaxTxFee.toString(),
     "ether"
   );
-  console.log(
-    ` estimate MAX Tx Fee:${estimateMaxTxFee} (${estimateMaxTxFeeETH} ${assetId})`
-  );
+  console.log(` estimate MAX Tx Fee:${estimateMaxTxFee} (${estimateMaxTxFeeETH} ${assetId})`);
 
   // gasHex
   const gasHex = await web3_alchemy.utils.toHex(setGasLimit);
@@ -121,13 +112,34 @@ const sendTx = async (_to, _tx, _signer, _gasLimit) => {
   return createReceipt;
 };
 
+async function sleepForSeconds(amount) {
+  console.log(`Sleeping for ${amount} seconds...`);
+  await new Promise((r) => setTimeout(r, amount * 1000)); // milliseconds
+  console.log(`${amount} seconds have passed!`);
+}
+
 /////////////////////////////////////////
 ////// main functions ///////////////////
 /////////////////////////////////////////
 
 (async () => {
-  const tx = parkingPayment_alc.methods.addParkingOwner(PO_ADDR);
-  const receipt = await sendTx(PP_CA, tx, CO_ADDR, 2000000);
+  //const tx = parkingPayment_alc.methods.addParkingOwner(PO_ADDR);
+  //const receipt = await sendTx(PP_CA, tx, CO_ADDR, 2000000);
+
+  console.log("---------ADD PARKING OWNERS---------");
+  for (i = 1; i < parkingOwners.length; i++) {
+    const vaultName = parkingOwners[i].name;
+    const vaultId = parkingOwners[i].vaultId;
+    const addr = parkingOwners[i].address;
+
+    const tx = parkingPayment_alc.methods.addParkingOwner(addr);
+    const receipt = await sendTx(PP_CA, tx, CO_ADDR, 2000000);
+
+    console.log(
+      `index: ${i}, vaultId: ${vaultId}, name:${vaultName} address: ${addr}, addParkingOwner pushed`
+    );
+    sleepForSeconds(20);
+  }
 })().catch((error) => {
   console.log(error);
 });

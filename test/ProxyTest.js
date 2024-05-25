@@ -41,13 +41,12 @@ describe("TokenDelegator", function () {
   let delegator;
   let JST_V21_Proxy;
 
-  const domainName = process.env.DOMAIN_SEPARATOR_PARAM_NAME;
-  const domainVersion = process.env.DOMAIN_SEPARATOR_PARAM_VERSION;
+  const domainName = process.env.DOMAIN_SEPARATOR_NAME;
+  const domainVersion = process.env.DOMAIN_SEPARATOR_VERSION;
 
   beforeEach(async function () {
     // Get signers
-    [TokenOwner, owner, owner2, spender, minter, recipient, relayer] =
-      await ethers.getSigners();
+    [TokenOwner, owner, owner2, spender, minter, recipient, relayer] = await ethers.getSigners();
     console.log("TokenOwner address= ", TokenOwner.address);
     console.log("owner address     = ", owner.address);
     console.log("owner2 address    = ", owner2.address);
@@ -63,10 +62,7 @@ describe("TokenDelegator", function () {
     forwarder = await Forwarder.deploy();
     await forwarder.waitForDeployment();
     console.log("Forwarder deployed to:    ", forwarder.target);
-    const tx = await forwarder.registerDomainSeparator(
-      domainName,
-      domainVersion
-    );
+    const tx = await forwarder.registerDomainSeparator(domainName, domainVersion);
     await tx.wait();
     console.log("DomainSeparator registered");
 
@@ -78,9 +74,7 @@ describe("TokenDelegator", function () {
 
     // Deploy ERC1967 Proxy
     const ERC1967Proxy = await hre.ethers.getContractFactory("ERC1967Proxy");
-    const data = ImplementContract.interface.encodeFunctionData("initialize", [
-      TokenOwner.address,
-    ]);
+    const data = ImplementContract.interface.encodeFunctionData("initialize", [TokenOwner.address]);
     erc1967Proxy = await ERC1967Proxy.deploy(token.target, data);
     await erc1967Proxy.waitForDeployment();
     console.log("erc1967Proxy deployed to: ", erc1967Proxy.target);
@@ -99,23 +93,11 @@ describe("TokenDelegator", function () {
     await JST_V21_Proxy.connect(TokenOwner).addMinter(minter.address);
 
     // mint
-    await JST_V21_Proxy.connect(minter).mint(
-      owner.address,
-      ethers.parseEther("2000")
-    );
-    await JST_V21_Proxy.connect(minter).mint(
-      owner2.address,
-      ethers.parseEther("3000")
-    );
+    await JST_V21_Proxy.connect(minter).mint(owner.address, ethers.parseEther("2000"));
+    await JST_V21_Proxy.connect(minter).mint(owner2.address, ethers.parseEther("3000"));
 
-    log_balance(
-      "owner initialBalance  ",
-      await JST_V21_Proxy.balanceOf(owner.address)
-    );
-    log_balance(
-      "owner2 initialBalance ",
-      await JST_V21_Proxy.balanceOf(owner2.address)
-    );
+    log_balance("owner initialBalance  ", await JST_V21_Proxy.balanceOf(owner.address));
+    log_balance("owner2 initialBalance ", await JST_V21_Proxy.balanceOf(owner2.address));
   });
 
   //----------------------------------------------------------------
@@ -175,14 +157,8 @@ describe("TokenDelegator", function () {
       );
 
     log_balance("owner      ", await JST_V21_Proxy.balanceOf(owner.address));
-    log_balance(
-      "recipient  ",
-      await JST_V21_Proxy.balanceOf(recipient.address)
-    );
-    log_balance(
-      "owner allow",
-      await JST_V21_Proxy.allowance(owner.address, delegator.target)
-    );
+    log_balance("recipient  ", await JST_V21_Proxy.balanceOf(recipient.address));
+    log_balance("owner allow", await JST_V21_Proxy.allowance(owner.address, delegator.target));
 
     expect(await JST_V21_Proxy.balanceOf(recipient.address)).to.equal(amount);
   });
@@ -244,18 +220,13 @@ describe("TokenDelegator", function () {
       );
 
     log_balance("owner      ", await JST_V21_Proxy.balanceOf(owner.address));
-    log_balance(
-      "recipient  ",
-      await JST_V21_Proxy.balanceOf(recipient.address)
-    );
+    log_balance("recipient  ", await JST_V21_Proxy.balanceOf(recipient.address));
     log_balance(
       "owner allow spender",
       await JST_V21_Proxy.allowance(owner.address, spender.address)
     );
 
-    expect(
-      await JST_V21_Proxy.allowance(owner.address, spender.address)
-    ).to.equal(amount);
+    expect(await JST_V21_Proxy.allowance(owner.address, spender.address)).to.equal(amount);
   });
 
   //----------------------------------------------------------------

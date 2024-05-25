@@ -19,7 +19,10 @@ async function init_ENV_SQS() {
 
 // SQS:::SEND MESSAGE
 async function _sendSQSMessage(from_addr) {
-  const messageGroupId = "QueueGroup2x";
+  // lane 1-8
+  const source = from_addr;
+  const Lane = (parseInt(source.slice(-1), 16) % 8) + 1;
+  const messageGroupId = `QueueGroup2x_${Lane}`;
 
   const message = {
     from_addr: from_addr,

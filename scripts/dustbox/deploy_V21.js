@@ -2,10 +2,10 @@ require("dotenv").config({ path: ".env" });
 const hre = require("hardhat");
 
 async function main() {
-  const TokenOwner = process.env.FIREBLOCKS_VAULT_ACCOUNT_ID_CONTRACTOWNER_ADDR;
+  const TokenOwner = process.env.FIREBLOCKS_VID_CONTRACTOWNER_ADDR;
 
-  const domainName = process.env.DOMAIN_SEPARATOR_PARAM_NAME;
-  const domainVersion = process.env.DOMAIN_SEPARATOR_PARAM_VERSION;
+  const domainName = process.env.DOMAIN_SEPARATOR_NAME;
+  const domainVersion = process.env.DOMAIN_SEPARATOR_VERSION;
 
   let forwarder;
   let token;
@@ -42,9 +42,7 @@ async function main() {
 
   // Deploy ERC1967 Proxy
   const ERC1967Proxy = await hre.ethers.getContractFactory("ERC1967Proxy");
-  const data = ImplementContract.interface.encodeFunctionData("initialize", [
-    TokenOwner,
-  ]);
+  const data = ImplementContract.interface.encodeFunctionData("initialize", [TokenOwner]);
   erc1967Proxy = await ERC1967Proxy.deploy(token.target, data);
   await erc1967Proxy.waitForDeployment();
   console.log("erc1967Proxy deployed to: ", erc1967Proxy.target);
