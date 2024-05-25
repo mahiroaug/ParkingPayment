@@ -2,7 +2,7 @@
   - [1.1. エンティティ](#11-エンティティ)
   - [1.2. コントラクト仕様](#12-コントラクト仕様)
     - [1.2.1. ## STEP1 全般](#121--step1-全般)
-    - [1.2.2. ## STEP2 事前登録](#122--step2-事前登録)
+    - [1.2.2. ## STEP2 事前登録＆デポジット](#122--step2-事前登録デポジット)
     - [1.2.3. ## STEP3 入庫時](#123--step3-入庫時)
     - [1.2.4. ## STEP4 出庫時](#124--step4-出庫時)
     - [1.2.5. ## STEP5 預託終了](#125--step5-預託終了)
@@ -43,12 +43,13 @@
 - Carol は料金レート(1 分あたりの単価)を指定・更新することができる
 - Bob は Alice の入庫および出庫を記録することができる
 
-### 1.2.2. ## STEP2 事前登録
+### 1.2.2. ## STEP2 事前登録＆デポジット
 
 - Alice は事前に預託金として任意のトークンをコントラクトにデポジットする
-- このとき、Alice は Bob を指名する必要がある
-- 続けて Alice は別種のトークンをデポジットすることもできる。再び Bob を指名しても良いし、別のパーキング管理者を指名しても良い
-- Alice のデポジットは一定期間(仮に 1 カ月とする)ロックされ、これを引き出すことができない
+- このとき、Alice は Bob を指名しておく必要がある
+- 続けて Alice は別種のトークンをデポジットすることもできる。再び Bob を指名しても良いし、別のパーキング管理者を指名しても良いが、その場合は Bob の指名は上書きされる。
+- ALice は必要に応じて同じトークンを追加デポジットすることもできる。
+- Alice のデポジットは一定期間（仮に 1 カ月とする）ロックされ、その間 Alice はこれを引き出すことができない
 
 ### 1.2.3. ## STEP3 入庫時
 
@@ -57,12 +58,14 @@
 ### 1.2.4. ## STEP4 出庫時
 
 - Alice が Bob の駐車場を出庫したとき、Bob はコントラクトに「Alice が出庫した」ことを記録する
-- コントラクトは Alice が滞在した時間(分)に料金レートを乗じた駐車料金を自動算出し、駐車料金からシステム手数料（仮に３％とする）を差し引いた分を Bob に送金し、システム手数料を Carol に送金する。最後にこれらに相当する金額を Alice のデポジットから差し引くことで清算を完了する
+- このとき、コントラクトは Alice が滞在した時間(分)に料金レートを乗じた駐車料金を自動算出し、駐車料金からシステム手数料（仮に３％とする）を差し引いた分を Bob に送金し、システム手数料は Carol に送金する。最後にこれらに相当する金額を Alice のデポジット分から差し引くことで清算を完了する
+- Alice のデポジット残高が不足している場合はリバートとなる（すなわち Alice は追加のデポジットを投入しない限り出庫できない）
 
 ### 1.2.5. ## STEP5 預託終了
 
 - ロック期間経過後、Alice はデポジット残高を Alice のアドレスへ引き出すことができる。これはトークンの種類ごとに実行することができる
-- Carol はコントラクトオーナーの特権として、ロック期間満了の有無によらず、 Alice のデポジット残高を Alice のアドレスへ引き戻すことができる
+- ただし Alice が「入庫状態」のときは、Alice はこれを引き出すことはできない
+- Carol はコントラクトオーナーの特権として、ロック期間満了の有無や入庫状態の有無によらず、いつでも Alice のデポジット残高を Alice のアドレスへ引き戻すことができる
 
 ### 1.2.6. ##シーケンス図 (ParkingPayment)
 
@@ -76,22 +79,24 @@ sequenceDiagram
   participant Event as Event
 
   autonumber
-  Note right of User: deposit
-  User ->>+ PP: deposit()
+  Note right of User: Deposit
+  User ->>+ PP: dDposit(Alice,Bob,Token)
   PP ->>+ Token: transferFrom(--> ParkPayment)
   PP -->>- Event: DepositMade
   Note left of PO: Entry
-  PO ->>+ PP: Entry(User)
+  User->>PO: Alice入庫
+  PO ->>+ PP: Entry(Alice)
   PP -->>- Event: EntryRecorded
   Note left of PO: Exit
-  PO ->>+ PP: Exit(User)
+  User->>PO: Alice出庫
+  PO ->>+ PP: Exit(Alice)
   Note over PP: 料金自動計算
   PP ->>+ Token: transfer(parking Fee --> Bob)
   PP ->>+ Token: transfer(system Fee --> Carol)
   PP -->>- Event: ExitRecorded
-  Note right of User: withdraw
-  User ->>+ PP: withdraw()
-  PP ->>+ Token: transfer(--> User)
+  Note right of User: Withdraw
+  User ->>+ PP: Withdraw(Alice,Token)
+  PP ->>+ Token: transfer(--> Alice)
   PP -->>- Event: FundsWithdrawn
 ```
 
@@ -105,7 +110,7 @@ sequenceDiagram
 sequenceDiagram
   actor Owner as Owner
   actor User as User
-  participant NFCAddressRegistry as Registry(Contract)
+  participant NFCAddressRegistry as Registry
   participant Event as Event
 
   autonumber

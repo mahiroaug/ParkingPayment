@@ -2,17 +2,21 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 
 contract ParkingPayment is 
     Initializable,
     OwnableUpgradeable, 
-    UUPSUpgradeable,  
+    UUPSUpgradeable,
+    ReentrancyGuardUpgradeable,
     ERC2771ContextUpgradeable 
 {
+    using SafeERC20 for IERC20;
 
     //----------------------------------------------------------------
     // definition
@@ -24,6 +28,10 @@ contract ParkingPayment is
     mapping(address => bool) public validParkingOwners;
     mapping(address => address) public designatedOwner; // user addr -> parking owner addr
     mapping(address => EntryInfo) public parkingStatus;  // Mapping from user address to parking information
+    mapping(address => mapping(address => bool)) private userTokenExists; // user addr -> token addr -> existence flag
+    mapping(address => address[]) private userTokenList; // user addr -> list of token addresses
+    mapping(address => mapping(address => uint256)) public lastDepositTime; // user addr -> token addr -> last deposit timestamp
+
 
     // Structure to hold parking entry information for each user
     struct EntryInfo {
@@ -91,7 +99,7 @@ contract ParkingPayment is
     }
 
     // deposit tokens
-    function depositTokens(address tokenAddress, uint256 amount, address parkingOwner) public {
+    function depositTokens(address tokenAddress, uint256 amount, address parkingOwner) public nonReentrant {
         require(amount > 0, "Deposit amount must be greater than zero.");
         require(tokenAddress != address(0), "Token address cannot be zero.");
         require(validParkingOwners[parkingOwner], "Parking owner is not registered.");
@@ -99,18 +107,25 @@ contract ParkingPayment is
         address sender = _msgSender();
         IERC20 token = IERC20(tokenAddress);
         // need allowance
-        bool sent = token.transferFrom(sender, address(this), amount);
-        require(sent, "Token transfer failed.");
+        token.safeTransferFrom(sender, address(this), amount);
+
 
         // record deposit and designated owner
         deposits[sender][tokenAddress] += amount;
         designatedOwner[sender] = parkingOwner;
+        lastDepositTime[sender][tokenAddress] = block.timestamp;
+
+        // Add token address to the user's token list if it's not already there
+        if (!userTokenExists[sender][tokenAddress]) {
+            userTokenExists[sender][tokenAddress] = true;
+            userTokenList[sender].push(tokenAddress);
+        }
 
         emit DepositMade(sender, tokenAddress, amount, parkingOwner);
     }
 
     // Function to record a parking entry
-    function recordEntry(address userAddress, address tokenAddress) public {
+    function recordEntry(address userAddress, address tokenAddress) public nonReentrant {
         address sender = _msgSender();
 
         require(userAddress != address(0), "User address cannot be zero.");
@@ -131,7 +146,7 @@ contract ParkingPayment is
 
 
     // Function to record a parking exit and handle payment
-    function recordExit(address userAddress) public {
+    function recordExit(address userAddress) public nonReentrant {
         require(userAddress != address(0), "User address cannot be zero.");
         require(_msgSender() == designatedOwner[userAddress], "Only designated parking owner can record exit.");
         require(parkingStatus[userAddress].isParked, "User is not currently parked.");
@@ -144,20 +159,21 @@ contract ParkingPayment is
 
         // Get the token information
         address tokenAddress = parkingStatus[userAddress].tokenAddress;
+        require(tokenAddress != address(0), "Invalid token address.");
         require(deposits[userAddress][tokenAddress] >= parkingFee, "Insufficient funds for payment.");
+
+        // Ensure the designated owner is a valid address
+        require(designatedOwner[userAddress] != address(0), "Invalid designated owner address.");
 
         // Calculate the system fee (e.g., 3%)
         uint256 systemFee = parkingFee * 3 / 100;
         uint256 netParkingFee = parkingFee - systemFee;
 
-        // Transfer net parking fee
-        bool success;
-        success = IERC20(tokenAddress).transfer(designatedOwner[userAddress], netParkingFee);
-        require(success, "Payment to parking owner failed.");
-        success = IERC20(tokenAddress).transfer(owner(), systemFee);
-        require(success, "Payment of system fee failed.");
-
+        // Transfer net parking fee and system fee in a single transaction
         deposits[userAddress][tokenAddress] -= parkingFee;
+        IERC20(tokenAddress).safeTransfer(designatedOwner[userAddress], netParkingFee);
+        IERC20(tokenAddress).safeTransfer(owner(), systemFee);
+
 
         // Reset parking status for future reuse
         parkingStatus[userAddress] = EntryInfo({
@@ -167,11 +183,10 @@ contract ParkingPayment is
         });
 
         emit ExitRecorded(userAddress, tokenAddress, parkedMinutes, netParkingFee, systemFee);
-
     }
 
     // Function to allow users or contract owner to withdraw their remaining deposit funds after the parking period and required delay
-    function withdrawRemainingFunds(address userAddress, address tokenAddress) public {
+    function withdrawRemainingFunds(address userAddress, address tokenAddress) public nonReentrant {
         address sender = _msgSender();
 
         require(userAddress != address(0), "User address cannot be zero.");
@@ -179,24 +194,48 @@ contract ParkingPayment is
         require(deposits[userAddress][tokenAddress] > 0, "No remaining funds to withdraw.");
         require(sender == userAddress || sender == owner(), "Only the user or the contract owner can perform this action.");
         if (sender == userAddress) {
-            require(block.timestamp >= parkingStatus[userAddress].entryTime + WITHDRAWAL_DELAY, "Cannot withdraw before delay period.");
+            require(block.timestamp >= lastDepositTime[userAddress][tokenAddress] + WITHDRAWAL_DELAY, "Cannot withdraw before delay period.");
+            require(!parkingStatus[userAddress].isParked, "Cannot withdraw while parked.");
         }
          
-        uint256 amountToWithdraw = deposits[userAddress][tokenAddress];
         IERC20 token = IERC20(tokenAddress);
+        uint256 remainingFunds = deposits[userAddress][tokenAddress];
+
+       // Reset the user's deposit for the specified token to zero
+        deposits[userAddress][tokenAddress] = 0;
 
         // Ensure the contract has enough tokens to cover the withdrawal
-        require(token.balanceOf(address(this)) >= amountToWithdraw, "Insufficient funds in the contract.");
+        require(token.balanceOf(address(this)) >= remainingFunds, "Insufficient funds in the contract.");
 
-        // Transfer the remaining funds to the user
-        bool success = token.transfer(userAddress, amountToWithdraw);
-        require(success, "Withdrawal failed.");
+        // Check if all deposits for the user are zero
+        bool hasDeposits = false;
+        for (uint256 i = 0; i < userTokenList[userAddress].length; i++) {
+            if (deposits[userAddress][userTokenList[userAddress][i]] > 0) {
+                hasDeposits = true;
+                break;
+            }
+        }
 
-        // Reset the deposit balance and designated owner for the user and token
-        deposits[userAddress][tokenAddress] = 0;
-        designatedOwner[userAddress] = address(0);
+        // Reset designatedOwner only if all deposits are zero
+        if (!hasDeposits) {
+            designatedOwner[userAddress] = address(0);
+        }
 
-        emit FundsWithdrawn(userAddress, tokenAddress, amountToWithdraw);
+        // Remove the token address from the user's token list if the deposit is zero
+        if (deposits[userAddress][tokenAddress] == 0) {
+            userTokenExists[userAddress][tokenAddress] = false;
+            for (uint256 i = 0; i < userTokenList[userAddress].length; i++) {
+                if (userTokenList[userAddress][i] == tokenAddress) {
+                    userTokenList[userAddress][i] = userTokenList[userAddress][userTokenList[userAddress].length - 1];
+                    userTokenList[userAddress].pop();
+                    break;
+                }
+            }
+        }
+
+        token.safeTransfer(userAddress, remainingFunds);
+
+        emit FundsWithdrawn(userAddress, tokenAddress, remainingFunds);
     }
 
     // Function to set the parking rate, restricted to owner
