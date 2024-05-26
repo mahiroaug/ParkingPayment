@@ -165,7 +165,7 @@ export class MyStack extends cdk.Stack {
 
     const myLF31 = new lambda.Function(this, "lambda31-EntryMaster", {
       runtime: lambda.Runtime.NODEJS_18_X,
-      code: lambda.Code.fromAsset(path.join(__dirname, "lambda/lambda21")),
+      code: lambda.Code.fromAsset(path.join(__dirname, "lambda/lambda31")),
       handler: "index.handler",
       timeout: cdk.Duration.seconds(30),
       memorySize: 512,
@@ -186,7 +186,7 @@ export class MyStack extends cdk.Stack {
 
     const myLF32 = new lambda.Function(this, "lambda32-EntrySub", {
       runtime: lambda.Runtime.NODEJS_18_X,
-      code: lambda.Code.fromAsset(path.join(__dirname, "lambda/lambda22")),
+      code: lambda.Code.fromAsset(path.join(__dirname, "lambda/lambda32")),
       handler: "index.handler",
       timeout: cdk.Duration.seconds(180),
       memorySize: 512,
@@ -284,14 +284,14 @@ export class MyStack extends cdk.Stack {
     // SQS 1x
     // --------------------------------------------------------------------------------
     // Create the Dead Letter Queue
-    const deadLetterQueue = new sqs.Queue(this, "CMD1xDeadLetterQueue", {
+    const deadLetterQueue = new sqs.Queue(this, "CMD1xDLQ-", {
       fifo: true,
       visibilityTimeout: cdk.Duration.seconds(180),
       retentionPeriod: cdk.Duration.days(14), // 14 days
       contentBasedDeduplication: true,
     });
 
-    const queue = new sqs.Queue(this, "CMD1xQueue", {
+    const queue = new sqs.Queue(this, "CMD1xQueue-", {
       fifo: true,
       visibilityTimeout: cdk.Duration.seconds(180), // default visibility timeout
       retentionPeriod: cdk.Duration.hours(3),
@@ -330,14 +330,14 @@ export class MyStack extends cdk.Stack {
     // SQS 2x
     // --------------------------------------------------------------------------------
     // Create the Dead Letter Queue
-    const deadLetterQueue2 = new sqs.Queue(this, "CMD2xDeadLetterQueue", {
+    const deadLetterQueue2 = new sqs.Queue(this, "CMD2xDLQ-", {
       fifo: true,
       visibilityTimeout: cdk.Duration.seconds(180),
       retentionPeriod: cdk.Duration.days(14), // 14 days
       contentBasedDeduplication: true,
     });
 
-    const queue2 = new sqs.Queue(this, "CMD2xQueue", {
+    const queue2 = new sqs.Queue(this, "CMD2xQueue-", {
       fifo: true,
       visibilityTimeout: cdk.Duration.seconds(180), // default visibility timeout
       retentionPeriod: cdk.Duration.hours(3),
@@ -375,13 +375,13 @@ export class MyStack extends cdk.Stack {
     // SQS 3x
     // --------------------------------------------------------------------------------
     // Create the Dead Letter Queue
-    const deadLetterQueue3 = new sqs.Queue(this, "CMD3xDeadLetterQueue", {
+    const deadLetterQueue3 = new sqs.Queue(this, "CMD3xDLQ-", {
       fifo: true,
       visibilityTimeout: cdk.Duration.seconds(180),
       retentionPeriod: cdk.Duration.days(14), // 14 days
       contentBasedDeduplication: true,
     });
-    const queue3 = new sqs.Queue(this, "CMD3xQueue", {
+    const queue3 = new sqs.Queue(this, "CMD3xQueue-", {
       fifo: true,
       visibilityTimeout: cdk.Duration.seconds(180), // default visibility timeout
       retentionPeriod: cdk.Duration.hours(3),

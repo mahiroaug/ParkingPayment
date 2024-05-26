@@ -397,10 +397,11 @@ curl -w "\n%{http_code}\n" \
 
 Back サーバがやってること
 
-- Client からリクエストを受け付ける（主な引数はカード ID）
+- Client からリクエストを受け付ける（主な引数はカード ID）（→API-GW→Lambda）
 - Fireblocks で Vault を生成し、vaultID と address を払い出す
 - vaultID と address の対応情報を Gas Station に登録する
 - Client にレスポンスを返す（ラウンドトリップタイム目標 5 秒）
+- 異常系の場合はここで終了。正常系の場合はバックグラウンド処理に移行する（→SQS→Lambda）
 - address に 1000PPC を mint する
 - カード ID と address の対応情報を Registry コントラクトに書き込む
 
@@ -469,9 +470,10 @@ curl -w "\n%{http_code}\n" \
 
 Back サーバがやってること
 
-- Client からリクエストを受け付ける（引数はカード ID）
+- Client からリクエストを受け付ける（引数はカード ID）（→API-GW→Lambda）
 - Registry コントラクトに問い合わせて address を入手する
 - Client にレスポンスを返す（ラウンドトリップタイム目標 3 秒）
+- 異常系の場合はここで終了。正常系の場合はバックグラウンド処理に移行する（→SQS→Lambda）
 - address から ParkPayment コントラクトに 600PPC の allowance を与える
 - address から ParkPayment コントラクトに利用登録(デポジット)を行う
 - ParkPayment コントラクトは address から 600PPC を受け取る
@@ -522,12 +524,12 @@ sequenceDiagram
 
 Back サーバがやってること
 
-- Client からリクエストを受け付ける（引数はカード ID）
+- Client からリクエストを受け付ける（引数はカード ID）（→API-GW→Lambda）
 - Registry コントラクトにカード ID を問い合わせて、address を入手する
 - ParkPayment コントラクトに address の現在 status を問い合わせて、True(入庫状態)であれば 400 エラー
 - ParkPayment コントラクトに address の現在デポジット残高を問い合わせて、残高が 30PPC 未満であれば 400 エラー（デポジット追加して出直してきな）
 - Client にレスポンスを返す（ラウンドトリップタイム目標 3 秒）
-- 異常系の場合はここで終了。正常系の場合はバックグラウンド処理に移行する
+- 異常系の場合はここで終了。正常系の場合はバックグラウンド処理に移行する（→SQS→Lambda）
 - ParkPayment コントラクトに address の入庫処理を行う（status=True,timestamp=打刻）
 
 ```mermaid

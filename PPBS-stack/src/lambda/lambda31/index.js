@@ -1,8 +1,8 @@
 //'use strict';
 
 // -------------------LIB------------------ //
-const GetterEngine = require("lib/31A_getAddr.js");
-const QueueEngine = require("lib/31Q_QueueEngine.js");
+const GetterEngine = require("./lib/31A_getAddr");
+const QueueEngine = require("./lib/31Q_QueueEngine");
 
 // -------------------ENVIRONMENT------------------ //
 const path_name01 = "/Deposit";
@@ -26,7 +26,7 @@ exports.handler = async (event) => {
     default:
       // process1 get registry and check parking status and deposit balance
       const { cardId } = JSON.parse(event.body);
-      const from_addr = await GetterEngine.getRegistry(cardId);
+      const from_addr = await GetterEngine.getRegistryByCard(cardId);
       console.log("31A_getterRegistry::from_addr:", from_addr);
 
       if (from_addr.statusCode === 400 || from_addr.statusCode === 500) {

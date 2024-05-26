@@ -1,8 +1,8 @@
 //'use strict';
 
 // -------------------LIB------------------ //
-const CreateEngine = require("lib/11AB_createVregistDB.js");
-const QueueEngine = require("lib/11Q_QueueEngine.js");
+const CreateEngine = require("./lib/11AB_createVregistDB");
+const QueueEngine = require("./lib/11Q_QueueEngine");
 
 // -------------------ENVIRONMENT------------------ //
 const path_name01 = "/CreateVandM";
@@ -34,20 +34,14 @@ exports.handler = async (event) => {
           headers,
           statusCode: resVault.statusCode,
           body: JSON.stringify({
-            message:
-              resVault.statusCode === 400
-                ? "Bad Request"
-                : "Internal Server Error",
+            message: resVault.statusCode === 400 ? "Bad Request" : "Internal Server Error",
             details: JSON.parse(resVault.body),
           }),
         };
       }
 
       // process2 send SQS message
-      const resQueue = await QueueEngine.sendSQSMessage(
-        cardId,
-        resVault.address
-      );
+      const resQueue = await QueueEngine.sendSQSMessage(cardId, resVault.address);
       console.log("11AB_createVregistDB::resQueue:", resQueue);
 
       responseBody = {

@@ -1,8 +1,8 @@
 //'use strict';
 
 // -------------------LIB------------------ //
-const GetterEngine = require("lib/21A_getterRegistry.js");
-const QueueEngine = require("lib/21Q_QueueEngine.js");
+const GetterEngine = require("./lib/21A_getterRegistry");
+const QueueEngine = require("./lib/21Q_QueueEngine");
 
 // -------------------ENVIRONMENT------------------ //
 const path_name01 = "/Deposit";
@@ -25,12 +25,26 @@ exports.handler = async (event) => {
     case path_name01:
     default:
       const { cardId } = JSON.parse(event.body);
-      const from_addr = await GetterEngine.getRegistry(cardId);
-      console.log("21A_getterRegistry::from_addr:", from_addr);
 
+      // get from_addr
+      const from_addr = await GetterEngine.getRegistryByCard(cardId);
+      console.log("21A_getterRegistry::from_addr:", from_addr);
+      if (from_addr.statusCode === 400 || from_addr.statusCode === 500) {
+        return {
+          headers,
+          statusCode: from_addr.statusCode,
+          body: JSON.stringify({
+            message: from_addr.statusCode === 400 ? "Bad Request" : "Internal Server Error",
+            details: JSON.parse(from_addr.body),
+          }),
+        };
+      }
+
+      // send SQS message
       const resQueue = await QueueEngine.sendSQSMessage(from_addr);
       console.log("21Q_QueueEngine::resQueue:", resQueue);
 
+      // response
       responseBody = {
         message: "request is received",
         result: {

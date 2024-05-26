@@ -1,7 +1,7 @@
 //'use strict';
 
 // -------------------LIB------------------ //
-const DepositEngine = require("lib/22BC_PermitDeposit.js");
+const DepositEngine = require("./lib/22BC_PermitDeposit");
 
 // -------------------ENVIRONMENT------------------ //
 
