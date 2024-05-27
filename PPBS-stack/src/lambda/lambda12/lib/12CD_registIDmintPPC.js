@@ -52,22 +52,31 @@ const {
 /////////////////////////////////////////
 
 async function mintToken(target_addr, amount) {
+  console.log(`mintToken:target_addr::${target_addr}, amount::${amount}`);
+
   if (!getIsEnvInitialized()) {
+    console.log("mintToken:initialize ENV");
     await init_ENV();
   }
   const web3_alchemy = getWeb3Alchemy();
+  console.log("mintToken:web3_alchemy::", web3_alchemy);
   const token_alc = getTokenAlc();
+  console.log("mintToken:token_alc::", token_alc);
 
   // from address (minter address)
   const source = target_addr;
   const minerIndex = parseInt(source.slice(-1), 16) % 8;
+  console.log("mintToken:minerIndex::", minerIndex);
   const from_addr = minters[minerIndex].address;
+  console.log("mintToken:from_addr::", from_addr);
 
   // to address (token address)
   const to_addr = TOKEN_CA;
+  console.log(`mintToken:to_addr::${to_addr}`);
 
   // data
   const weiAmount = web3_alchemy.utils.toWei(amount.toString(), "ether");
+  console.log(`mintToken:weiAmount::${weiAmount}`);
   const data = token_alc.methods.mint(target_addr, weiAmount);
 
   // set request param
@@ -107,19 +116,25 @@ async function registIDmintPPC(cardId, address) {
   await init_ENV(SO_ID);
 
   // step 1-1C : mint token
-  console.log("step 1-1C : mint token----------------------------------------------");
+  console.log(
+    "step 1-1C : mint token----------------------------------------------"
+  );
   const resApi = await mintToken(address, 1000);
   console.log("createVaultAndMint:resApi::", resApi.data);
   await sleepForSeconds(60);
 
   // step 1-1D : regist cardId
-  console.log("step 1-1D : regist cardId-------------------------------------------");
+  console.log(
+    "step 1-1D : regist cardId-------------------------------------------"
+  );
   const resTx = await registCardId(cardId, address);
   console.log("createVaultAndMint:resTx:: ", resTx);
   await sleepForSeconds(0.2);
 
   // step 1-1E : check registry
-  console.log("step 1-1E : check registry-----------------------------------------");
+  console.log(
+    "step 1-1E : check registry-----------------------------------------"
+  );
   const resTx2 = await getAddressByCardId(cardId);
   console.log("createVaultAndMint:resTx2:: ", resTx2);
   await sleepForSeconds(0.2);

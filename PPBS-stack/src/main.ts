@@ -39,9 +39,12 @@ export class MyStack extends cdk.Stack {
     // Endpoints
     // --------------------------------------------------------------------------------
 
-    const secretsManagerVpcEndpoint = vpc.addInterfaceEndpoint("SecretsManagerEndpoint", {
-      service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
-    });
+    const secretsManagerVpcEndpoint = vpc.addInterfaceEndpoint(
+      "SecretsManagerEndpoint",
+      {
+        service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
+      }
+    );
 
     secretsManagerVpcEndpoint.addToPolicy(
       new iam.PolicyStatement({
@@ -56,13 +59,21 @@ export class MyStack extends cdk.Stack {
     // --------------------------------------------------------------------------------
 
     // Create a new security group for the Lambda function
-    const lambdaSecurityGroup = new ec2.SecurityGroup(this, "LambdaSecurityGroup", {
-      vpc: vpc,
-      description: "Allow all outbound and inbound traffic for Lambda function",
-      allowAllOutbound: true, // Allow all outbound traffic
-    });
+    const lambdaSecurityGroup = new ec2.SecurityGroup(
+      this,
+      "LambdaSecurityGroup",
+      {
+        vpc: vpc,
+        description:
+          "Allow all outbound and inbound traffic for Lambda function",
+        allowAllOutbound: true, // Allow all outbound traffic
+      }
+    );
     // Allow all inbound traffic
-    lambdaSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.allTraffic());
+    lambdaSecurityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.allTraffic()
+    );
 
     //--------------------------------------------------------------------------------
     // Lambda Layer
@@ -202,6 +213,48 @@ export class MyStack extends cdk.Stack {
     });
 
     //--------------------------------------------------------------------------------
+    // Lambda Function 41
+    // --------------------------------------------------------------------------------
+
+    const myLF41 = new lambda.Function(this, "lambda41-ExitMaster", {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset(path.join(__dirname, "lambda/lambda41")),
+      handler: "index.handler",
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      environment: {
+        TZ: "Asia/Tokyo",
+      },
+      layers: [layer],
+      vpc: vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [lambdaSecurityGroup],
+    });
+
+    //--------------------------------------------------------------------------------
+    // Lambda Function 42
+    // --------------------------------------------------------------------------------
+
+    const myLF42 = new lambda.Function(this, "lambda42-ExitSub", {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset(path.join(__dirname, "lambda/lambda42")),
+      handler: "index.handler",
+      timeout: cdk.Duration.seconds(180),
+      memorySize: 512,
+      environment: {
+        TZ: "Asia/Tokyo",
+      },
+      layers: [layer],
+      vpc: vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [lambdaSecurityGroup],
+    });
+
+    //--------------------------------------------------------------------------------
     // Secrets Manager
     // --------------------------------------------------------------------------------
 
@@ -216,6 +269,8 @@ export class MyStack extends cdk.Stack {
     myLF22.addToRolePolicy(secretsManagerPolicy);
     myLF31.addToRolePolicy(secretsManagerPolicy);
     myLF32.addToRolePolicy(secretsManagerPolicy);
+    myLF41.addToRolePolicy(secretsManagerPolicy);
+    myLF42.addToRolePolicy(secretsManagerPolicy);
 
     new CfnOutput(this, "Output", {
       value: vpc.vpcId,
@@ -253,6 +308,12 @@ export class MyStack extends cdk.Stack {
     // resource for Entry
     const ENTRY = api.root.addResource("Entry");
     ENTRY.addMethod("POST", new apigateway.LambdaIntegration(myLF31), {
+      apiKeyRequired: true,
+    });
+
+    // resource for Exit
+    const EXIT = api.root.addResource("Exit");
+    EXIT.addMethod("POST", new apigateway.LambdaIntegration(myLF41), {
       apiKeyRequired: true,
     });
 
@@ -417,25 +478,77 @@ export class MyStack extends cdk.Stack {
     });
 
     //--------------------------------------------------------------------------------
+    // SQS 4x
+    // --------------------------------------------------------------------------------
+    // Create the Dead Letter Queue
+    const deadLetterQueue4 = new sqs.Queue(this, "CMD4xDLQ-", {
+      fifo: true,
+      visibilityTimeout: cdk.Duration.seconds(180),
+      retentionPeriod: cdk.Duration.days(14), // 14 days
+      contentBasedDeduplication: true,
+    });
+    const queue4 = new sqs.Queue(this, "CMD4xQueue-", {
+      fifo: true,
+      visibilityTimeout: cdk.Duration.seconds(180), // default visibility timeout
+      retentionPeriod: cdk.Duration.hours(3),
+      deduplicationScope: sqs.DeduplicationScope.MESSAGE_GROUP,
+      fifoThroughputLimit: sqs.FifoThroughputLimit.PER_MESSAGE_GROUP_ID,
+      contentBasedDeduplication: true,
+      deadLetterQueue: {
+        maxReceiveCount: 3, // Send to Dead Letter Queue after 3 failed attempts
+        queue: deadLetterQueue4,
+      },
+    });
+
+    // Output the URL of the SQS Queue
+    new CfnOutput(this, "CMD4xQueueUrl", {
+      value: queue4.queueUrl,
+    });
+
+    // Grant the Lambda function the necessary permissions to send messages to the SQS Queue
+    queue4.grantSendMessages(myLF41);
+
+    // Trigger the Lambda function when a new message is added to the SQS Queue
+    myLF42.addEventSource(
+      new eventsources.SqsEventSource(queue4, {
+        batchSize: 1, // Number of messages to process from the queue at once
+        reportBatchItemFailures: true,
+        maxConcurrency: 8,
+      })
+    );
+    myLF42.addPermission("Allow SQS", {
+      action: "lambda:InvokeFunction",
+      principal: new iam.ServicePrincipal("sqs.amazonaws.com"),
+      sourceArn: queue4.queueArn,
+    });
+
+    //--------------------------------------------------------------------------------
     // Lambda Environment Variables
     // -------------------------------------------------------------------------------
 
     const API_GATEWAY_APIKEY = process.env.API_GATEWAY_APIKEY as string;
     const API_GATEWAY_URL = process.env.API_GATEWAY_URL as string;
     const TOKENPROXY_CA = process.env.TOKENPROXY_CA as string;
-    const NFCADDRESSREGISTRYPROXY_CA = process.env.NFCADDRESSREGISTRYPROXY_CA as string;
+    const NFCADDRESSREGISTRYPROXY_CA = process.env
+      .NFCADDRESSREGISTRYPROXY_CA as string;
     const PARKINGPAYMENTPROXY_CA = process.env.PARKINGPAYMENTPROXY_CA as string;
-    const FIREBLOCKS_VID_SERVICEOWNER_ADDR = process.env.FIREBLOCKS_VID_SERVICEOWNER_ADDR as string;
-    const FIREBLOCKS_VID_SERVICEOWNER = process.env.FIREBLOCKS_VID_SERVICEOWNER as string;
+    const FIREBLOCKS_VID_SERVICEOWNER_ADDR = process.env
+      .FIREBLOCKS_VID_SERVICEOWNER_ADDR as string;
+    const FIREBLOCKS_VID_SERVICEOWNER = process.env
+      .FIREBLOCKS_VID_SERVICEOWNER as string;
     const EXPLOERE = process.env.EXPLOERE as string;
     const POLYGON_RPC_URL = process.env.POLYGON_RPC_URL as string;
     const FIREBLOCKS_ASSET_ID = process.env.FIREBLOCKS_ASSET_ID as string;
-    const FIREBLOCKS_ASSET_ID_MYTOKEN = process.env.FIREBLOCKS_ASSET_ID_MYTOKEN as string;
-    const FIREBLOCKS_API_KEY_SIGNER = process.env.FIREBLOCKS_API_KEY_SIGNER as string;
+    const FIREBLOCKS_ASSET_ID_MYTOKEN = process.env
+      .FIREBLOCKS_ASSET_ID_MYTOKEN as string;
+    const FIREBLOCKS_API_KEY_SIGNER = process.env
+      .FIREBLOCKS_API_KEY_SIGNER as string;
     const FIREBLOCKS_URL = process.env.FIREBLOCKS_URL as string;
     const ALCHEMY_HTTPS = process.env.ALCHEMY_HTTPS as string;
-    const DOMAIN_SEPARATOR_NAME_TOKEN = process.env.DOMAIN_SEPARATOR_NAME_TOKEN as string;
-    const DOMAIN_SEPARATOR_VERSION_TOKEN = process.env.DOMAIN_SEPARATOR_VERSION_TOKEN as string;
+    const DOMAIN_SEPARATOR_NAME_TOKEN = process.env
+      .DOMAIN_SEPARATOR_NAME_TOKEN as string;
+    const DOMAIN_SEPARATOR_VERSION_TOKEN = process.env
+      .DOMAIN_SEPARATOR_VERSION_TOKEN as string;
 
     // -----------------------------------------------------------------
     // Lambda Function 11 ----------------------------------------------
@@ -444,14 +557,29 @@ export class MyStack extends cdk.Stack {
     myLF11.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
     myLF11.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
     myLF11.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
-    myLF11.addEnvironment("NFCADDRESSREGISTRYPROXY_CA", NFCADDRESSREGISTRYPROXY_CA);
-    myLF11.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER_ADDR", FIREBLOCKS_VID_SERVICEOWNER_ADDR);
-    myLF11.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER", FIREBLOCKS_VID_SERVICEOWNER);
+    myLF11.addEnvironment(
+      "NFCADDRESSREGISTRYPROXY_CA",
+      NFCADDRESSREGISTRYPROXY_CA
+    );
+    myLF11.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER_ADDR",
+      FIREBLOCKS_VID_SERVICEOWNER_ADDR
+    );
+    myLF11.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER",
+      FIREBLOCKS_VID_SERVICEOWNER
+    );
     myLF11.addEnvironment("EXPLOERE", EXPLOERE);
     myLF11.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
     myLF11.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
-    myLF11.addEnvironment("FIREBLOCKS_ASSET_ID_MYTOKEN", FIREBLOCKS_ASSET_ID_MYTOKEN);
-    myLF11.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
+    myLF11.addEnvironment(
+      "FIREBLOCKS_ASSET_ID_MYTOKEN",
+      FIREBLOCKS_ASSET_ID_MYTOKEN
+    );
+    myLF11.addEnvironment(
+      "FIREBLOCKS_API_KEY_SIGNER",
+      FIREBLOCKS_API_KEY_SIGNER
+    );
     myLF11.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
     myLF11.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
 
@@ -462,14 +590,29 @@ export class MyStack extends cdk.Stack {
     myLF12.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
     myLF12.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
     myLF12.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
-    myLF12.addEnvironment("NFCADDRESSREGISTRYPROXY_CA", NFCADDRESSREGISTRYPROXY_CA);
-    myLF12.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER_ADDR", FIREBLOCKS_VID_SERVICEOWNER_ADDR);
-    myLF12.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER", FIREBLOCKS_VID_SERVICEOWNER);
+    myLF12.addEnvironment(
+      "NFCADDRESSREGISTRYPROXY_CA",
+      NFCADDRESSREGISTRYPROXY_CA
+    );
+    myLF12.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER_ADDR",
+      FIREBLOCKS_VID_SERVICEOWNER_ADDR
+    );
+    myLF12.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER",
+      FIREBLOCKS_VID_SERVICEOWNER
+    );
     myLF12.addEnvironment("EXPLOERE", EXPLOERE);
     myLF12.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
     myLF12.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
-    myLF12.addEnvironment("FIREBLOCKS_ASSET_ID_MYTOKEN", FIREBLOCKS_ASSET_ID_MYTOKEN);
-    myLF12.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
+    myLF12.addEnvironment(
+      "FIREBLOCKS_ASSET_ID_MYTOKEN",
+      FIREBLOCKS_ASSET_ID_MYTOKEN
+    );
+    myLF12.addEnvironment(
+      "FIREBLOCKS_API_KEY_SIGNER",
+      FIREBLOCKS_API_KEY_SIGNER
+    );
     myLF12.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
     myLF12.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
 
@@ -479,18 +622,39 @@ export class MyStack extends cdk.Stack {
     myLF21.addEnvironment("SQS2x_URL", queue2.queueUrl);
     myLF21.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
     myLF21.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
-    myLF21.addEnvironment("DOMAIN_SEPARATOR_NAME_TOKEN", DOMAIN_SEPARATOR_NAME_TOKEN);
-    myLF21.addEnvironment("DOMAIN_SEPARATOR_VERSION_TOKEN", DOMAIN_SEPARATOR_VERSION_TOKEN);
+    myLF21.addEnvironment(
+      "DOMAIN_SEPARATOR_NAME_TOKEN",
+      DOMAIN_SEPARATOR_NAME_TOKEN
+    );
+    myLF21.addEnvironment(
+      "DOMAIN_SEPARATOR_VERSION_TOKEN",
+      DOMAIN_SEPARATOR_VERSION_TOKEN
+    );
     myLF21.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
     myLF21.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
-    myLF21.addEnvironment("NFCADDRESSREGISTRYPROXY_CA", NFCADDRESSREGISTRYPROXY_CA);
-    myLF21.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER_ADDR", FIREBLOCKS_VID_SERVICEOWNER_ADDR);
-    myLF21.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER", FIREBLOCKS_VID_SERVICEOWNER);
+    myLF21.addEnvironment(
+      "NFCADDRESSREGISTRYPROXY_CA",
+      NFCADDRESSREGISTRYPROXY_CA
+    );
+    myLF21.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER_ADDR",
+      FIREBLOCKS_VID_SERVICEOWNER_ADDR
+    );
+    myLF21.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER",
+      FIREBLOCKS_VID_SERVICEOWNER
+    );
     myLF21.addEnvironment("EXPLOERE", EXPLOERE);
     myLF21.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
     myLF21.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
-    myLF21.addEnvironment("FIREBLOCKS_ASSET_ID_MYTOKEN", FIREBLOCKS_ASSET_ID_MYTOKEN);
-    myLF21.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
+    myLF21.addEnvironment(
+      "FIREBLOCKS_ASSET_ID_MYTOKEN",
+      FIREBLOCKS_ASSET_ID_MYTOKEN
+    );
+    myLF21.addEnvironment(
+      "FIREBLOCKS_API_KEY_SIGNER",
+      FIREBLOCKS_API_KEY_SIGNER
+    );
     myLF21.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
     myLF21.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
 
@@ -500,18 +664,39 @@ export class MyStack extends cdk.Stack {
     myLF22.addEnvironment("SQS2x_URL", queue2.queueUrl);
     myLF22.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
     myLF22.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
-    myLF22.addEnvironment("DOMAIN_SEPARATOR_NAME_TOKEN", DOMAIN_SEPARATOR_NAME_TOKEN);
-    myLF22.addEnvironment("DOMAIN_SEPARATOR_VERSION_TOKEN", DOMAIN_SEPARATOR_VERSION_TOKEN);
+    myLF22.addEnvironment(
+      "DOMAIN_SEPARATOR_NAME_TOKEN",
+      DOMAIN_SEPARATOR_NAME_TOKEN
+    );
+    myLF22.addEnvironment(
+      "DOMAIN_SEPARATOR_VERSION_TOKEN",
+      DOMAIN_SEPARATOR_VERSION_TOKEN
+    );
     myLF22.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
     myLF22.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
-    myLF22.addEnvironment("NFCADDRESSREGISTRYPROXY_CA", NFCADDRESSREGISTRYPROXY_CA);
-    myLF22.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER_ADDR", FIREBLOCKS_VID_SERVICEOWNER_ADDR);
-    myLF22.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER", FIREBLOCKS_VID_SERVICEOWNER);
+    myLF22.addEnvironment(
+      "NFCADDRESSREGISTRYPROXY_CA",
+      NFCADDRESSREGISTRYPROXY_CA
+    );
+    myLF22.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER_ADDR",
+      FIREBLOCKS_VID_SERVICEOWNER_ADDR
+    );
+    myLF22.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER",
+      FIREBLOCKS_VID_SERVICEOWNER
+    );
     myLF22.addEnvironment("EXPLOERE", EXPLOERE);
     myLF22.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
     myLF22.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
-    myLF22.addEnvironment("FIREBLOCKS_ASSET_ID_MYTOKEN", FIREBLOCKS_ASSET_ID_MYTOKEN);
-    myLF22.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
+    myLF22.addEnvironment(
+      "FIREBLOCKS_ASSET_ID_MYTOKEN",
+      FIREBLOCKS_ASSET_ID_MYTOKEN
+    );
+    myLF22.addEnvironment(
+      "FIREBLOCKS_API_KEY_SIGNER",
+      FIREBLOCKS_API_KEY_SIGNER
+    );
     myLF22.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
     myLF22.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
 
@@ -523,14 +708,29 @@ export class MyStack extends cdk.Stack {
     myLF31.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
     myLF31.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
     myLF31.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
-    myLF31.addEnvironment("NFCADDRESSREGISTRYPROXY_CA", NFCADDRESSREGISTRYPROXY_CA);
-    myLF31.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER_ADDR", FIREBLOCKS_VID_SERVICEOWNER_ADDR);
-    myLF31.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER", FIREBLOCKS_VID_SERVICEOWNER);
+    myLF31.addEnvironment(
+      "NFCADDRESSREGISTRYPROXY_CA",
+      NFCADDRESSREGISTRYPROXY_CA
+    );
+    myLF31.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER_ADDR",
+      FIREBLOCKS_VID_SERVICEOWNER_ADDR
+    );
+    myLF31.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER",
+      FIREBLOCKS_VID_SERVICEOWNER
+    );
     myLF31.addEnvironment("EXPLOERE", EXPLOERE);
     myLF31.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
     myLF31.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
-    myLF31.addEnvironment("FIREBLOCKS_ASSET_ID_MYTOKEN", FIREBLOCKS_ASSET_ID_MYTOKEN);
-    myLF31.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
+    myLF31.addEnvironment(
+      "FIREBLOCKS_ASSET_ID_MYTOKEN",
+      FIREBLOCKS_ASSET_ID_MYTOKEN
+    );
+    myLF31.addEnvironment(
+      "FIREBLOCKS_API_KEY_SIGNER",
+      FIREBLOCKS_API_KEY_SIGNER
+    );
     myLF31.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
     myLF31.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
 
@@ -542,16 +742,99 @@ export class MyStack extends cdk.Stack {
     myLF32.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
     myLF32.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
     myLF32.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
-    myLF32.addEnvironment("NFCADDRESSREGISTRYPROXY_CA", NFCADDRESSREGISTRYPROXY_CA);
-    myLF32.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER_ADDR", FIREBLOCKS_VID_SERVICEOWNER_ADDR);
-    myLF32.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER", FIREBLOCKS_VID_SERVICEOWNER);
+    myLF32.addEnvironment(
+      "NFCADDRESSREGISTRYPROXY_CA",
+      NFCADDRESSREGISTRYPROXY_CA
+    );
+    myLF32.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER_ADDR",
+      FIREBLOCKS_VID_SERVICEOWNER_ADDR
+    );
+    myLF32.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER",
+      FIREBLOCKS_VID_SERVICEOWNER
+    );
     myLF32.addEnvironment("EXPLOERE", EXPLOERE);
     myLF32.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
     myLF32.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
-    myLF32.addEnvironment("FIREBLOCKS_ASSET_ID_MYTOKEN", FIREBLOCKS_ASSET_ID_MYTOKEN);
-    myLF32.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
+    myLF32.addEnvironment(
+      "FIREBLOCKS_ASSET_ID_MYTOKEN",
+      FIREBLOCKS_ASSET_ID_MYTOKEN
+    );
+    myLF32.addEnvironment(
+      "FIREBLOCKS_API_KEY_SIGNER",
+      FIREBLOCKS_API_KEY_SIGNER
+    );
     myLF32.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
     myLF32.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
+
+    // -----------------------------------------------------------------
+    // Lambda Function 41 ----------------------------------------------
+    // -----------------------------------------------------------------
+    myLF41.addEnvironment("SQS4x_URL", queue3.queueUrl);
+    myLF41.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
+    myLF41.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
+    myLF41.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
+    myLF41.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
+    myLF41.addEnvironment(
+      "NFCADDRESSREGISTRYPROXY_CA",
+      NFCADDRESSREGISTRYPROXY_CA
+    );
+    myLF41.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER_ADDR",
+      FIREBLOCKS_VID_SERVICEOWNER_ADDR
+    );
+    myLF41.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER",
+      FIREBLOCKS_VID_SERVICEOWNER
+    );
+    myLF41.addEnvironment("EXPLOERE", EXPLOERE);
+    myLF41.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
+    myLF41.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
+    myLF41.addEnvironment(
+      "FIREBLOCKS_ASSET_ID_MYTOKEN",
+      FIREBLOCKS_ASSET_ID_MYTOKEN
+    );
+    myLF41.addEnvironment(
+      "FIREBLOCKS_API_KEY_SIGNER",
+      FIREBLOCKS_API_KEY_SIGNER
+    );
+    myLF41.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
+    myLF41.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
+
+    // -----------------------------------------------------------------
+    // Lambda Function 42 ----------------------------------------------
+    // -----------------------------------------------------------------
+    myLF42.addEnvironment("SQS4x_URL", queue3.queueUrl);
+    myLF42.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
+    myLF42.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
+    myLF42.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
+    myLF42.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
+    myLF42.addEnvironment(
+      "NFCADDRESSREGISTRYPROXY_CA",
+      NFCADDRESSREGISTRYPROXY_CA
+    );
+    myLF42.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER_ADDR",
+      FIREBLOCKS_VID_SERVICEOWNER_ADDR
+    );
+    myLF42.addEnvironment(
+      "FIREBLOCKS_VID_SERVICEOWNER",
+      FIREBLOCKS_VID_SERVICEOWNER
+    );
+    myLF42.addEnvironment("EXPLOERE", EXPLOERE);
+    myLF42.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
+    myLF42.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
+    myLF42.addEnvironment(
+      "FIREBLOCKS_ASSET_ID_MYTOKEN",
+      FIREBLOCKS_ASSET_ID_MYTOKEN
+    );
+    myLF42.addEnvironment(
+      "FIREBLOCKS_API_KEY_SIGNER",
+      FIREBLOCKS_API_KEY_SIGNER
+    );
+    myLF42.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
+    myLF42.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
 
     //--------------------------------------------------------------------------------
     // END

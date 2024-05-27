@@ -5,7 +5,8 @@ const vaultsRaw = require("./.env.vaults");
 const TOKEN_ABI = require("./contracts/V21/JST_V21.sol/JST_V21.json").abi;
 const REGISTRY_ABI =
   require("./contracts/NFCAddressRegistry/NFCAddressRegistry.sol/NFCAddressRegistry.json").abi;
-const PP_ABI = require("./contracts/ParkingPayment/ParkingPaymentV2.sol/ParkingPayment.json").abi;
+const PP_ABI =
+  require("./contracts/ParkingPayment/ParkingPaymentV2.sol/ParkingPayment.json").abi;
 
 // contracts ------------------------------------
 const PP_CA = process.env.PARKINGPAYMENTPROXY_CA;
@@ -16,7 +17,10 @@ const REGISTRY_CA = process.env.NFCADDRESSREGISTRYPROXY_CA;
 const { Web3 } = require("web3");
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 const { FireblocksSDK } = require("fireblocks-sdk");
-const { FireblocksWeb3Provider, ChainId } = require("@fireblocks/fireblocks-web3-provider");
+const {
+  FireblocksWeb3Provider,
+  ChainId,
+} = require("@fireblocks/fireblocks-web3-provider");
 const region = process.env.AWS_REGION;
 const chainId = ChainId.POLYGON_AMOY;
 const rpcUrl = process.env.POLYGON_RPC_URL;
@@ -26,7 +30,7 @@ const TOKEN_ASSET_ID = process.env.FIREBLOCKS_ASSET_ID_MYTOKEN;
 
 ///// vaults
 const parkingOwners = vaultsRaw.parkingOwners;
-const minters = vaultsRaw.miners;
+const minters = vaultsRaw.minters;
 const SO_ID = process.env.FIREBLOCKS_VID_SERVICEOWNER;
 const SO_ADDR = process.env.FIREBLOCKS_VID_SERVICEOWNER_ADDR;
 
@@ -68,8 +72,13 @@ async function init_ENV(fb_vaultId = SO_ID) {
 
   try {
     const fb_apiSecret_secretName = "fireblocks_secret_SIGNER";
-    const fb_apiSecret_secret = await SecretsManager.getSecret(fb_apiSecret_secretName, region);
-    console.log(`${fb_apiSecret_secretName} : ${fb_apiSecret_secret.slice(0, 40)}`);
+    const fb_apiSecret_secret = await SecretsManager.getSecret(
+      fb_apiSecret_secretName,
+      region
+    );
+    console.log(
+      `${fb_apiSecret_secretName} : ${fb_apiSecret_secret.slice(0, 40)}`
+    );
     const fb_apiKey = process.env.FIREBLOCKS_API_KEY_SIGNER;
 
     // web3 provider for Fireblocks

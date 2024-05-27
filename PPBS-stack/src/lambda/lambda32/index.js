@@ -1,7 +1,7 @@
 //'use strict';
 
 // -------------------LIB------------------ //
-const EntryEngine = require("lib/32B_Entry.js");
+const EntryEngine = require("./lib/32B_Entry");
 
 // -------------------ENVIRONMENT------------------ //
 
