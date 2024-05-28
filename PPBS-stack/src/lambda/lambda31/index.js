@@ -5,7 +5,7 @@ const GetterEngine = require("./lib/31A_getAddr");
 const QueueEngine = require("./lib/31Q_QueueEngine");
 
 // -------------------ENVIRONMENT------------------ //
-const path_name01 = "/Deposit";
+const path_name01 = "/Entry";
 
 exports.handler = async (event) => {
   console.log("event:", event);

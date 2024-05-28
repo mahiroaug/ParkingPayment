@@ -5,7 +5,7 @@ const GetterEngine = require("./lib/41A_getAddr");
 const QueueEngine = require("./lib/41Q_QueueEngine");
 
 // -------------------ENVIRONMENT------------------ //
-const path_name01 = "/Deposit";
+const path_name01 = "/Exit";
 
 exports.handler = async (event) => {
   console.log("event:", event);
@@ -34,10 +34,7 @@ exports.handler = async (event) => {
           headers,
           statusCode: from_addr.statusCode,
           body: JSON.stringify({
-            message:
-              from_addr.statusCode === 400
-                ? "Bad Request"
-                : "Internal Server Error",
+            message: from_addr.statusCode === 400 ? "Bad Request" : "Internal Server Error",
             details: JSON.parse(from_addr.body),
           }),
         };

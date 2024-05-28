@@ -23,6 +23,7 @@
   - [5.2. Task2 Deposit(利用登録＆トークン預託)](#52-task2-deposit利用登録トークン預託)
   - [Task3 Entry(入庫)](#task3-entry入庫)
   - [Task4 Exit(出庫)](#task4-exit出庫)
+  - [Task5 Withdraw(契約終了＆引き出し)](#task5-withdraw契約終了引き出し)
 
 # 1. スマ婚要件
 
@@ -652,5 +653,55 @@ sequenceDiagram
     ParkPayment->>Event: ExitRecorded(address,利用時間,利用料,手数料)
     ParkPayment-->>-FB: resTx
     FB-->>-Back: res
+
+```
+
+## Task5 Withdraw(契約終了＆引き出し)
+
+Back サーバがやってること
+
+- Client からリクエストを受け付ける（引数はカード ID）（→API-GW→Lambda）
+- Registry コントラクトにカード ID を問い合わせて、address を入手する
+- ParkPayment コントラクトに address の現在 status を問い合わせて、True(入庫状態)であれば 400 エラー
+- ParkPayment コントラクトに address の現在デポジット状態を問い合わせて、未デポジット(未契約状態)であれば 400 エラー
+- Client にレスポンスを返す（ラウンドトリップタイム目標 3 秒）
+- 異常系の場合はここで終了。正常系の場合はバックグラウンド処理に移行する（→SQS→Lambda）
+- ParkPayment コントラクトに withdraw 処理を指示。指定された alice(利用者)の指定されたトークンのデポジット残高を alice に送金する
+
+```mermaid
+sequenceDiagram
+
+    participant Client as Client
+    participant Back as Back Server<br>(AWS)
+    participant GSN as Gas Station<br>(AWS + Fireblocks)
+    participant Registry
+    participant ParkPayment
+    participant PPC as ParkPayCoin<br>(PPC)
+    participant Event
+    autonumber
+
+    Client->>+Back: Withdraw(cardId)
+    Back->>+Registry: call(carId)
+    Note over Registry: getMapAddress(cardId)
+    Registry-->>-Back: res(address)
+    Back->>+ParkPayment: check ParkingStatus(address)
+    ParkPayment->>-Back: response ParkingStatus(True/False)
+    Back->>+ParkPayment: check getDepositBalance(address)
+    ParkPayment->>-Back: response depositBalance(残高)
+    Back-->>-Client: response()
+
+    Note left of Back:ここまで数秒
+
+    Back->>+GSN: Withdraw(address)
+    GSN-->>-Back: result
+    GSN->>+ParkPayment: Meta transaction(ERC2771)
+    Note over ParkPayment: Withdraw(address)
+    ParkPayment->>+PPC: tranfser(alice,残高)
+    Note over PPC: tranfser(alice,残高)
+    PPC-->>-ParkPayment: result
+    ParkPayment->>Event: FundsWithdrawn
+    ParkPayment-->>-GSN: resTx
+
+    Note left of Back:ここまで90秒弱
 
 ```

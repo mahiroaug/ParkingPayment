@@ -244,6 +244,90 @@ export class MyStack extends cdk.Stack {
     });
 
     //--------------------------------------------------------------------------------
+    // Lambda Function 51
+    // --------------------------------------------------------------------------------
+
+    const myLF51 = new lambda.Function(this, "lambda51-WithdrawMaster", {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset(path.join(__dirname, "lambda/lambda51")),
+      handler: "index.handler",
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      environment: {
+        TZ: "Asia/Tokyo",
+      },
+      layers: [layer],
+      vpc: vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [lambdaSecurityGroup],
+    });
+
+    //--------------------------------------------------------------------------------
+    // Lambda Function 52
+    // --------------------------------------------------------------------------------
+
+    const myLF52 = new lambda.Function(this, "lambda52-WithdrawSub", {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset(path.join(__dirname, "lambda/lambda52")),
+      handler: "index.handler",
+      timeout: cdk.Duration.seconds(180),
+      memorySize: 512,
+      environment: {
+        TZ: "Asia/Tokyo",
+      },
+      layers: [layer],
+      vpc: vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [lambdaSecurityGroup],
+    });
+
+    //--------------------------------------------------------------------------------
+    // Lambda Function A1
+    // --------------------------------------------------------------------------------
+
+    const myLFA1 = new lambda.Function(this, "lambdaA1-ToolMaster", {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset(path.join(__dirname, "lambda/lambdaA1")),
+      handler: "index.handler",
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      environment: {
+        TZ: "Asia/Tokyo",
+      },
+      layers: [layer],
+      vpc: vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [lambdaSecurityGroup],
+    });
+
+    //--------------------------------------------------------------------------------
+    // Lambda Function A2
+    // --------------------------------------------------------------------------------
+
+    const myLFA2 = new lambda.Function(this, "lambdaA2-ToolSub", {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset(path.join(__dirname, "lambda/lambdaA2")),
+      handler: "index.handler",
+      timeout: cdk.Duration.seconds(180),
+      memorySize: 512,
+      environment: {
+        TZ: "Asia/Tokyo",
+      },
+      layers: [layer],
+      vpc: vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [lambdaSecurityGroup],
+    });
+
+    //--------------------------------------------------------------------------------
     // Secrets Manager
     // --------------------------------------------------------------------------------
 
@@ -260,6 +344,10 @@ export class MyStack extends cdk.Stack {
     myLF32.addToRolePolicy(secretsManagerPolicy);
     myLF41.addToRolePolicy(secretsManagerPolicy);
     myLF42.addToRolePolicy(secretsManagerPolicy);
+    myLF51.addToRolePolicy(secretsManagerPolicy);
+    myLF52.addToRolePolicy(secretsManagerPolicy);
+    myLFA1.addToRolePolicy(secretsManagerPolicy);
+    myLFA2.addToRolePolicy(secretsManagerPolicy);
 
     new CfnOutput(this, "Output", {
       value: vpc.vpcId,
@@ -309,6 +397,20 @@ export class MyStack extends cdk.Stack {
     // resource for Exit
     const EXIT = api.root.addResource("Exit");
     EXIT.addMethod("POST", new apigateway.LambdaIntegration(myLF41), {
+      apiKeyRequired: true,
+    });
+
+    // resource for Withdraw
+    const WITHDRAW = api.root.addResource("Withdraw");
+    WITHDRAW.addMethod("POST", new apigateway.LambdaIntegration(myLF51), {
+      apiKeyRequired: true,
+    });
+
+    // resource for PPC
+    //// resource for PPC/mint
+    const PPCmater = api.root.addResource("PPC");
+    const PPCmint = PPCmater.addResource("mint");
+    PPCmint.addMethod("POST", new apigateway.LambdaIntegration(myLFA1), {
       apiKeyRequired: true,
     });
 
@@ -518,6 +620,96 @@ export class MyStack extends cdk.Stack {
     });
 
     //--------------------------------------------------------------------------------
+    // SQS 5x
+    // --------------------------------------------------------------------------------
+    // Create the Dead Letter Queue
+    const deadLetterQueue5 = new sqs.Queue(this, "CMD5xDLQ-", {
+      fifo: true,
+      visibilityTimeout: cdk.Duration.seconds(180),
+      retentionPeriod: cdk.Duration.days(14), // 14 days
+      contentBasedDeduplication: true,
+    });
+    const queue5 = new sqs.Queue(this, "CMD5xQueue-", {
+      fifo: true,
+      visibilityTimeout: cdk.Duration.seconds(180), // default visibility timeout
+      retentionPeriod: cdk.Duration.hours(3),
+      deduplicationScope: sqs.DeduplicationScope.MESSAGE_GROUP,
+      fifoThroughputLimit: sqs.FifoThroughputLimit.PER_MESSAGE_GROUP_ID,
+      contentBasedDeduplication: true,
+      deadLetterQueue: {
+        maxReceiveCount: 3, // Send to Dead Letter Queue after 3 failed attempts
+        queue: deadLetterQueue5,
+      },
+    });
+
+    // Output the URL of the SQS Queue
+    new CfnOutput(this, "CMD5xQueueUrl", {
+      value: queue5.queueUrl,
+    });
+
+    // Grant the Lambda function the necessary permissions to send messages to the SQS Queue
+    queue5.grantSendMessages(myLF51);
+
+    // Trigger the Lambda function when a new message is added to the SQS Queue
+    myLF52.addEventSource(
+      new eventsources.SqsEventSource(queue5, {
+        batchSize: 1, // Number of messages to process from the queue at once
+        reportBatchItemFailures: true,
+        maxConcurrency: 8,
+      })
+    );
+    myLF52.addPermission("Allow SQS", {
+      action: "lambda:InvokeFunction",
+      principal: new iam.ServicePrincipal("sqs.amazonaws.com"),
+      sourceArn: queue5.queueArn,
+    });
+
+    //--------------------------------------------------------------------------------
+    // SQS Ax
+    // --------------------------------------------------------------------------------
+    // Create the Dead Letter Queue
+    const deadLetterQueueA = new sqs.Queue(this, "CMDAxDLQ-", {
+      fifo: true,
+      visibilityTimeout: cdk.Duration.seconds(180),
+      retentionPeriod: cdk.Duration.days(14), // 14 days
+      contentBasedDeduplication: true,
+    });
+    const queueA = new sqs.Queue(this, "CMDAxQueue-", {
+      fifo: true,
+      visibilityTimeout: cdk.Duration.seconds(180), // default visibility timeout
+      retentionPeriod: cdk.Duration.hours(3),
+      deduplicationScope: sqs.DeduplicationScope.MESSAGE_GROUP,
+      fifoThroughputLimit: sqs.FifoThroughputLimit.PER_MESSAGE_GROUP_ID,
+      contentBasedDeduplication: true,
+      deadLetterQueue: {
+        maxReceiveCount: 3, // Send to Dead Letter Queue after 3 failed attempts
+        queue: deadLetterQueueA,
+      },
+    });
+
+    // Output the URL of the SQS Queue
+    new CfnOutput(this, "CMDAxQueueUrl", {
+      value: queueA.queueUrl,
+    });
+
+    // Grant the Lambda function the necessary permissions to send messages to the SQS Queue
+    queueA.grantSendMessages(myLFA1);
+
+    // Trigger the Lambda function when a new message is added to the SQS Queue
+    myLFA2.addEventSource(
+      new eventsources.SqsEventSource(queueA, {
+        batchSize: 1, // Number of messages to process from the queue at once
+        reportBatchItemFailures: true,
+        maxConcurrency: 8,
+      })
+    );
+    myLFA2.addPermission("Allow SQS", {
+      action: "lambda:InvokeFunction",
+      principal: new iam.ServicePrincipal("sqs.amazonaws.com"),
+      sourceArn: queueA.queueArn,
+    });
+
+    //--------------------------------------------------------------------------------
     // Lambda Environment Variables
     // -------------------------------------------------------------------------------
 
@@ -541,7 +733,7 @@ export class MyStack extends cdk.Stack {
     // -----------------------------------------------------------------
     // Lambda Function 11 ----------------------------------------------
     // -----------------------------------------------------------------
-    myLF11.addEnvironment("SQS1x_URL", queue.queueUrl);
+    myLF11.addEnvironment("SQSxx_URL", queue.queueUrl);
     myLF11.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
     myLF11.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
     myLF11.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
@@ -559,7 +751,7 @@ export class MyStack extends cdk.Stack {
     // -----------------------------------------------------------------
     // Lambda Function 12 ----------------------------------------------
     // -----------------------------------------------------------------
-    myLF12.addEnvironment("SQS1x_URL", queue.queueUrl);
+    myLF12.addEnvironment("SQSxx_URL", queue.queueUrl);
     myLF12.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
     myLF12.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
     myLF12.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
@@ -577,7 +769,7 @@ export class MyStack extends cdk.Stack {
     // -----------------------------------------------------------------
     // Lambda Function 21 ----------------------------------------------
     // -----------------------------------------------------------------
-    myLF21.addEnvironment("SQS2x_URL", queue2.queueUrl);
+    myLF21.addEnvironment("SQSxx_URL", queue2.queueUrl);
     myLF21.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
     myLF21.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
     myLF21.addEnvironment("DOMAIN_SEPARATOR_NAME_TOKEN", DOMAIN_SEPARATOR_NAME_TOKEN);
@@ -598,7 +790,7 @@ export class MyStack extends cdk.Stack {
     // -----------------------------------------------------------------
     // Lambda Function 22 ----------------------------------------------
     // -----------------------------------------------------------------
-    myLF22.addEnvironment("SQS2x_URL", queue2.queueUrl);
+    myLF22.addEnvironment("SQSxx_URL", queue2.queueUrl);
     myLF22.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
     myLF22.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
     myLF22.addEnvironment("DOMAIN_SEPARATOR_NAME_TOKEN", DOMAIN_SEPARATOR_NAME_TOKEN);
@@ -619,7 +811,7 @@ export class MyStack extends cdk.Stack {
     // -----------------------------------------------------------------
     // Lambda Function 31 ----------------------------------------------
     // -----------------------------------------------------------------
-    myLF31.addEnvironment("SQS3x_URL", queue3.queueUrl);
+    myLF31.addEnvironment("SQSxx_URL", queue3.queueUrl);
     myLF31.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
     myLF31.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
     myLF31.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
@@ -638,7 +830,7 @@ export class MyStack extends cdk.Stack {
     // -----------------------------------------------------------------
     // Lambda Function 32 ----------------------------------------------
     // -----------------------------------------------------------------
-    myLF32.addEnvironment("SQS3x_URL", queue3.queueUrl);
+    myLF32.addEnvironment("SQSxx_URL", queue3.queueUrl);
     myLF32.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
     myLF32.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
     myLF32.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
@@ -657,7 +849,7 @@ export class MyStack extends cdk.Stack {
     // -----------------------------------------------------------------
     // Lambda Function 41 ----------------------------------------------
     // -----------------------------------------------------------------
-    myLF41.addEnvironment("SQS4x_URL", queue4.queueUrl);
+    myLF41.addEnvironment("SQSxx_URL", queue4.queueUrl);
     myLF41.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
     myLF41.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
     myLF41.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
@@ -676,7 +868,7 @@ export class MyStack extends cdk.Stack {
     // -----------------------------------------------------------------
     // Lambda Function 42 ----------------------------------------------
     // -----------------------------------------------------------------
-    myLF42.addEnvironment("SQS4x_URL", queue4.queueUrl);
+    myLF42.addEnvironment("SQSxx_URL", queue4.queueUrl);
     myLF42.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
     myLF42.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
     myLF42.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
@@ -691,6 +883,82 @@ export class MyStack extends cdk.Stack {
     myLF42.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
     myLF42.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
     myLF42.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
+
+    // -----------------------------------------------------------------
+    // Lambda Function 51 ----------------------------------------------
+    // -----------------------------------------------------------------
+    myLF51.addEnvironment("SQSxx_URL", queue5.queueUrl);
+    myLF51.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
+    myLF51.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
+    myLF51.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
+    myLF51.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
+    myLF51.addEnvironment("NFCADDRESSREGISTRYPROXY_CA", NFCADDRESSREGISTRYPROXY_CA);
+    myLF51.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER_ADDR", FIREBLOCKS_VID_SERVICEOWNER_ADDR);
+    myLF51.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER", FIREBLOCKS_VID_SERVICEOWNER);
+    myLF51.addEnvironment("EXPLOERE", EXPLOERE);
+    myLF51.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
+    myLF51.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
+    myLF51.addEnvironment("FIREBLOCKS_ASSET_ID_MYTOKEN", FIREBLOCKS_ASSET_ID_MYTOKEN);
+    myLF51.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
+    myLF51.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
+    myLF51.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
+
+    // -----------------------------------------------------------------
+    // Lambda Function 52 ----------------------------------------------
+    // -----------------------------------------------------------------
+    myLF52.addEnvironment("SQSxx_URL", queue5.queueUrl);
+    myLF52.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
+    myLF52.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
+    myLF52.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
+    myLF52.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
+    myLF52.addEnvironment("NFCADDRESSREGISTRYPROXY_CA", NFCADDRESSREGISTRYPROXY_CA);
+    myLF52.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER_ADDR", FIREBLOCKS_VID_SERVICEOWNER_ADDR);
+    myLF52.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER", FIREBLOCKS_VID_SERVICEOWNER);
+    myLF52.addEnvironment("EXPLOERE", EXPLOERE);
+    myLF52.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
+    myLF52.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
+    myLF52.addEnvironment("FIREBLOCKS_ASSET_ID_MYTOKEN", FIREBLOCKS_ASSET_ID_MYTOKEN);
+    myLF52.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
+    myLF52.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
+    myLF52.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
+
+    // -----------------------------------------------------------------
+    // Lambda Function A1 ----------------------------------------------
+    // -----------------------------------------------------------------
+    myLFA1.addEnvironment("SQSxx_URL", queueA.queueUrl);
+    myLFA1.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
+    myLFA1.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
+    myLFA1.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
+    myLFA1.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
+    myLFA1.addEnvironment("NFCADDRESSREGISTRYPROXY_CA", NFCADDRESSREGISTRYPROXY_CA);
+    myLFA1.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER_ADDR", FIREBLOCKS_VID_SERVICEOWNER_ADDR);
+    myLFA1.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER", FIREBLOCKS_VID_SERVICEOWNER);
+    myLFA1.addEnvironment("EXPLOERE", EXPLOERE);
+    myLFA1.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
+    myLFA1.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
+    myLFA1.addEnvironment("FIREBLOCKS_ASSET_ID_MYTOKEN", FIREBLOCKS_ASSET_ID_MYTOKEN);
+    myLFA1.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
+    myLFA1.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
+    myLFA1.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
+
+    // -----------------------------------------------------------------
+    // Lambda Function A2 ----------------------------------------------
+    // -----------------------------------------------------------------
+    myLFA2.addEnvironment("SQSxx_URL", queueA.queueUrl);
+    myLFA2.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
+    myLFA2.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
+    myLFA2.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
+    myLFA2.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
+    myLFA2.addEnvironment("NFCADDRESSREGISTRYPROXY_CA", NFCADDRESSREGISTRYPROXY_CA);
+    myLFA2.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER_ADDR", FIREBLOCKS_VID_SERVICEOWNER_ADDR);
+    myLFA2.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER", FIREBLOCKS_VID_SERVICEOWNER);
+    myLFA2.addEnvironment("EXPLOERE", EXPLOERE);
+    myLFA2.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
+    myLFA2.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
+    myLFA2.addEnvironment("FIREBLOCKS_ASSET_ID_MYTOKEN", FIREBLOCKS_ASSET_ID_MYTOKEN);
+    myLFA2.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
+    myLFA2.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
+    myLFA2.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
 
     //--------------------------------------------------------------------------------
     // END

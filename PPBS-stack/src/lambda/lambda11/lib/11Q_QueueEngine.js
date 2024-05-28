@@ -2,7 +2,7 @@
 const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
 
 // -------------------ENVIRONMENT------------------ //
-const SQS1x_URL = process.env.SQS1x_URL;
+const SQSxx_URL = process.env.SQSxx_URL;
 const region = process.env.AWS_REGION;
 
 // -------------------global definition------------ //
@@ -22,7 +22,7 @@ async function _sendSQSMessage(cardId, address) {
   // lane 1-8
   const source = address;
   const Lane = (parseInt(source.slice(-1), 16) % 8) + 1;
-  const messageGroupId = `QueueGroup1x_${Lane}`;
+  const messageGroupId = `QueueGroupxx_${Lane}`;
 
   const message = {
     cardId: cardId,
@@ -30,23 +30,23 @@ async function _sendSQSMessage(cardId, address) {
   };
 
   const params = {
-    QueueUrl: SQS1x_URL,
+    QueueUrl: SQSxx_URL,
     MessageBody: JSON.stringify(message),
     MessageGroupId: messageGroupId,
   };
 
-  console.log("SQS1x:: Sending message:", params);
+  console.log("SQSxx:: Sending message:", params);
   if (!params.QueueUrl || !params.MessageBody || !params.MessageGroupId) {
-    console.error("SQS1x:: Error: Missing required parameters in message params");
+    console.error("SQSxx:: Error: Missing required parameters in message params");
     return false;
   }
 
   try {
     const data = await sqsClient.send(new SendMessageCommand(params));
-    console.log("SQS1x:: Message sent:", data);
+    console.log("SQSxx:: Message sent:", data);
     return data.MessageId;
   } catch (err) {
-    console.error("SQS1x:: Error sending message:", err);
+    console.error("SQSxx:: Error sending message:", err);
     return false;
   }
 }

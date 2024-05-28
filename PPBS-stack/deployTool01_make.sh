@@ -11,3 +11,7 @@ cp -r src/share/common src/lambda/lambda31/lib/
 cp -r src/share/common src/lambda/lambda32/lib/
 cp -r src/share/common src/lambda/lambda41/lib/
 cp -r src/share/common src/lambda/lambda42/lib/
+cp -r src/share/common src/lambda/lambda51/lib/
+cp -r src/share/common src/lambda/lambda52/lib/
+cp -r src/share/common src/lambda/lambdaA1/lib/
+cp -r src/share/common src/lambda/lambdaA2/lib/
