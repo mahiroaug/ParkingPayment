@@ -377,20 +377,20 @@ curl -w "\n%{http_code}\n" \
 -H "Content-Type: application/json" \
 -H "x-api-key: <YOUR_API_KEY>" \
 -d '{
-    "cardId": "id-2115",
-    "name": "testName2115"
+    "cardId": "id-2348",
+    "name": "testName2348"
     }'
 
 ## response
 {
-  "message":"request is received",
-  "result":{
-    "cardId":"id-2115",
-    "name":"testName2115",
-    "vaultId":"263",
-    "address":"0x64C606266732d51244cC23c86DCFE438b10EEF97",
-    "queue":"0505b435-fa8d-41d9-be9f-d630998038eb"
-  }
+    "message": "request is received",
+    "result": {
+        "cardId": "id-2348",
+        "name": "testName2348",
+        "vaultId": "309",
+        "address": "0x4e08bB063E9475404Ec20DA0DF1555652d483FEc",
+        "queue": "2bdbf09f-1ec6-46c2-ac77-275b9b4aefe6"
+    }
 }
 201
 ```
@@ -453,17 +453,17 @@ curl -w "\n%{http_code}\n" \
 -H "Content-Type: application/json" \
 -H "x-api-key: <YOUR_API_KEY>" \
 -d '{
-    "cardId": "id-2115"
+    "cardId": "id-2348"
     }'
 
 ## response
 {
-  "message":"request is received",
-  "result":{
-    "cardId":"id-2115",
-    "from_addr":"0x64C606266732d51244cC23c86DCFE438b10EEF97",
-    "queue":"537edb61-83ee-479f-93f5-5aee07ca4818"
-  }
+    "message": "request is received",
+    "result": {
+        "cardId": "id-2348",
+        "from_addr": "0x4e08bB063E9475404Ec20DA0DF1555652d483FEc",
+        "queue": "23c8c67f-b91b-43ec-b2ca-6947dc0b3bb8"
+    }
 }
 201
 ```
@@ -522,6 +522,29 @@ sequenceDiagram
 
 ## Task3 Entry(入庫)
 
+```bash
+
+## request
+curl -w "\n%{http_code}\n" \
+-X POST https://**********.execute-api.ap-northeast-1.amazonaws.com/v1/Entry \
+-H "Content-Type: application/json" \
+-H "x-api-key: <YOUR_API_KEY>" \
+-d '{
+    "cardId": "id-2348"
+    }'
+
+## response
+{
+    "message": "request is received",
+    "result": {
+        "cardId": "id-2348",
+        "from_addr": "0x4e08bB063E9475404Ec20DA0DF1555652d483FEc",
+        "queue": "701bb8bf-1554-43cf-bbe6-7c8449e67cb1"
+    }
+}
+201
+```
+
 Back サーバがやってること
 
 - Client からリクエストを受け付ける（引数はカード ID）（→API-GW→Lambda）
@@ -566,6 +589,29 @@ sequenceDiagram
 ```
 
 ## Task4 Exit(出庫)
+
+```bash
+
+## request
+curl -w "\n%{http_code}\n" \
+-X POST https://**********.execute-api.ap-northeast-1.amazonaws.com/v1/Exit \
+-H "Content-Type: application/json" \
+-H "x-api-key: <YOUR_API_KEY>" \
+-d '{
+    "cardId": "id-2348"
+    }'
+
+## response
+{
+    "message": "request is received",
+    "result": {
+        "cardId": "id-2348",
+        "from_addr": "0x4e08bB063E9475404Ec20DA0DF1555652d483FEc",
+        "queue": "c3abd6f9-bc26-4acf-b8ad-353eef843ac4"
+    }
+}
+201
+```
 
 Back サーバがやってること
 
