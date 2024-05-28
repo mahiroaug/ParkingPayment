@@ -67,12 +67,12 @@ async function _ExitExecute(requsetParam) {
   // step 4-2B : exit
   console.log("step 4-2B : exit--------------------------");
   const resApi1B = await _exit(from_addr, park_addr);
-  console.log(`Deposit:permitSpender:: ${resApi1B}`);
+  console.log(`_ExitExecute:permitSpender:: ${resApi1B}`);
   await sleepForSeconds(60);
 
-  console.log("Deposit::from_addr::", from_addr, "--->>>Get Balance");
+  console.log("_ExitExecute::from_addr::", from_addr, "--->>>Get Balance");
   await getAccountBalance(from_addr);
-  console.log("Deposit::PP_CA::", PP_CA, "--->>>Get Balance");
+  console.log("_ExitExecute::PP_CA::", PP_CA, "--->>>Get Balance");
   await getAccountBalance(PP_CA);
   await getAllowance(from_addr, PP_CA);
 }
@@ -100,9 +100,7 @@ async function ExitExecute(from_addr) {
   // check requestParam
   console.log("ExitExecute:requestParam::", requestParam);
   if (!requestParam.from_addr || !requestParam.park_addr) {
-    console.error(
-      "ExitExecute: Error - Missing required parameters in requestParam"
-    );
+    console.error("ExitExecute: Error - Missing required parameters in requestParam");
     return;
   }
 

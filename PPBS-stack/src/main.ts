@@ -328,6 +328,27 @@ export class MyStack extends cdk.Stack {
     });
 
     //--------------------------------------------------------------------------------
+    // Lambda Function Z
+    // --------------------------------------------------------------------------------
+
+    const myLFZ = new lambda.Function(this, "lambdaZ-Info", {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset(path.join(__dirname, "lambda/lambdaZ")),
+      handler: "index.handler",
+      timeout: cdk.Duration.seconds(180),
+      memorySize: 512,
+      environment: {
+        TZ: "Asia/Tokyo",
+      },
+      layers: [layer],
+      vpc: vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [lambdaSecurityGroup],
+    });
+
+    //--------------------------------------------------------------------------------
     // Secrets Manager
     // --------------------------------------------------------------------------------
 
@@ -348,6 +369,7 @@ export class MyStack extends cdk.Stack {
     myLF52.addToRolePolicy(secretsManagerPolicy);
     myLFA1.addToRolePolicy(secretsManagerPolicy);
     myLFA2.addToRolePolicy(secretsManagerPolicy);
+    myLFZ.addToRolePolicy(secretsManagerPolicy);
 
     new CfnOutput(this, "Output", {
       value: vpc.vpcId,
@@ -411,6 +433,17 @@ export class MyStack extends cdk.Stack {
     const PPCmater = api.root.addResource("PPC");
     const PPCmint = PPCmater.addResource("mint");
     PPCmint.addMethod("POST", new apigateway.LambdaIntegration(myLFA1), {
+      apiKeyRequired: true,
+    });
+
+    // resource for Information
+    const INFO = api.root.addResource("Info");
+    const INFOgetA = INFO.addResource("getAddr");
+    INFOgetA.addMethod("POST", new apigateway.LambdaIntegration(myLFZ), {
+      apiKeyRequired: true,
+    });
+    const INFOgetP = INFO.addResource("getParkPayInfo");
+    INFOgetP.addMethod("POST", new apigateway.LambdaIntegration(myLFZ), {
       apiKeyRequired: true,
     });
 
@@ -959,6 +992,24 @@ export class MyStack extends cdk.Stack {
     myLFA2.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
     myLFA2.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
     myLFA2.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
+
+    // -----------------------------------------------------------------
+    // Lambda Function Z  ----------------------------------------------
+    // -----------------------------------------------------------------
+    myLFZ.addEnvironment("API_GATEWAY_APIKEY", API_GATEWAY_APIKEY);
+    myLFZ.addEnvironment("API_GATEWAY_URL", API_GATEWAY_URL);
+    myLFZ.addEnvironment("PARKINGPAYMENTPROXY_CA", PARKINGPAYMENTPROXY_CA);
+    myLFZ.addEnvironment("TOKENPROXY_CA", TOKENPROXY_CA);
+    myLFZ.addEnvironment("NFCADDRESSREGISTRYPROXY_CA", NFCADDRESSREGISTRYPROXY_CA);
+    myLFZ.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER_ADDR", FIREBLOCKS_VID_SERVICEOWNER_ADDR);
+    myLFZ.addEnvironment("FIREBLOCKS_VID_SERVICEOWNER", FIREBLOCKS_VID_SERVICEOWNER);
+    myLFZ.addEnvironment("EXPLOERE", EXPLOERE);
+    myLFZ.addEnvironment("POLYGON_RPC_URL", POLYGON_RPC_URL);
+    myLFZ.addEnvironment("FIREBLOCKS_ASSET_ID", FIREBLOCKS_ASSET_ID);
+    myLFZ.addEnvironment("FIREBLOCKS_ASSET_ID_MYTOKEN", FIREBLOCKS_ASSET_ID_MYTOKEN);
+    myLFZ.addEnvironment("FIREBLOCKS_API_KEY_SIGNER", FIREBLOCKS_API_KEY_SIGNER);
+    myLFZ.addEnvironment("FIREBLOCKS_URL", FIREBLOCKS_URL);
+    myLFZ.addEnvironment("ALCHEMY_HTTPS", ALCHEMY_HTTPS);
 
     //--------------------------------------------------------------------------------
     // END

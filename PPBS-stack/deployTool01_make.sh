@@ -15,3 +15,4 @@ cp -r src/share/common src/lambda/lambda51/lib/
 cp -r src/share/common src/lambda/lambda52/lib/
 cp -r src/share/common src/lambda/lambdaA1/lib/
 cp -r src/share/common src/lambda/lambdaA2/lib/
+cp -r src/share/common src/lambda/lambdaZ/lib/

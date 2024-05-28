@@ -24,7 +24,10 @@
   - [5.3. Task3 Entry(入庫)](#53-task3-entry入庫)
   - [5.4. Task4 Exit(出庫)](#54-task4-exit出庫)
   - [5.5. Task5 Withdraw(契約終了＆引き出し)](#55-task5-withdraw契約終了引き出し)
-  - [5.6. Other tools: PPC/mint](#56-other-tools-ppcmint)
+  - [5.6. Others](#56-others)
+    - [5.6.1. PPC/mint](#561-ppcmint)
+    - [5.6.2. Info/getAddr](#562-infogetaddr)
+    - [5.6.3. Info/getParkPayInfo](#563-infogetparkpayinfo)
 - [6. Appendix](#6-appendix)
   - [6.1. The study of gas cost (ガスコストの研究)](#61-the-study-of-gas-cost-ガスコストの研究)
 
@@ -732,7 +735,9 @@ sequenceDiagram
 
 ```
 
-## 5.6. Other tools: PPC/mint
+## 5.6. Others
+
+### 5.6.1. PPC/mint
 
 ```bash
 
@@ -759,6 +764,72 @@ curl -w "\n%{http_code}\n" \
 
 you can get 1000PPC repeatedly (infinity)
 
+### 5.6.2. Info/getAddr
+
+```bash
+
+## request
+curl -w "\n%{http_code}\n" \
+-X POST https://**********.execute-api.ap-northeast-1.amazonaws.com/v1/Info/getAddr \
+-H "Content-Type: application/json" \
+-H "x-api-key: <YOUR_API_KEY>" \
+-d '{
+    "cardId": "id-2350"
+    }'
+
+## response
+{
+    "message": "response for your request: /Info/getAddr",
+    "result": {
+        "cardId": "id-2350",
+        "from_addr": "0x4418D8c7fF3Ff03c02cA357B7F013317393fEeC2"
+    }
+}
+201
+```
+
+### 5.6.3. Info/getParkPayInfo
+
+```bash
+
+## request
+curl -w "\n%{http_code}\n" \
+-X POST https://**********.execute-api.ap-northeast-1.amazonaws.com/v1/Info/getParkPayInfo \
+-H "Content-Type: application/json" \
+-H "x-api-key: <YOUR_API_KEY>" \
+-d '{
+    "cardId": "id-2351"
+    }'
+
+## response
+{
+    "message": "response for your request: /Info/getParkPayInfo",
+    "result": {
+        "cardId": "id-2351",
+        "from_addr": "0x7F1D52515eFAB3D33669c389b1dc8F7462fCa89C",
+        "accountBalance": {
+            "MATIC": "0",
+            "PPC": "400"
+        },
+        "depositBalance": {
+            "PPC": "600"
+        },
+        "designatedOwner": "0x060Ddefc55FCF6a24C50CB8876294950A8733C94",
+        "lastDepositTime": {
+            "lastDepositTime": "1716889545",
+            "lastDepositTime_str": "5/28/2024, 6:45:45 PM"
+        },
+        "parkingStatus": {
+            "isParked": true,
+            "entryTime": "1716889637",
+            "entryTime_str": "5/28/2024, 6:47:17 PM",
+            "tokenAddress": "0xc692CDb48Ad01Fe7388A213374869556C88B1fFb"
+        }
+    }
+}
+201
+```
+
 # 6. Appendix
 
 ## 6.1. The study of gas cost (ガスコストの研究)
@@ -767,10 +838,10 @@ you can get 1000PPC repeatedly (infinity)
 | -------------- | -------------------------------------- | ------- | ---------- | --------------- |
 | 1. CreateVandM | PPC.`mint()`                           | 96,403  | ERC2771    | minters         |
 |                | Registry.`addId()`                     | 79,248  | No(native) | contract owners |
-| 2. Deposit     | PPC.`permit()`                         | 97,203  | ERC2612    | Alice           |
-|                | ParkPayment.`depositTokens()`          | 246,873 | ERC2771    | Alice           |
+| 2. Deposit     | PPC.`permit()`                         | 97,203  | ERC2612    | user            |
+|                | ParkPayment.`depositTokens()`          | 246,873 | ERC2771    | user            |
 | 3. Entry       | ParkPayment.`recordEntry()`            | 141,459 | ERC2771    | parking owners  |
 | 4. Exit        | ParkPayment.`recordExit()`             | 118,070 | ERC2771    | parking owners  |
-| 5. Withdraw    | ParkPayment.`withdrawRemainingFunds()` |         | ERC2771    | Alice           |
+| 5. Withdraw    | ParkPayment.`withdrawRemainingFunds()` |         | ERC2771    | user            |
 | n. PPC/mint    | PPC.`mint()`                           | 79,303  | ERC2771    | minters         |
 |                |                                        |         |            |                 |
