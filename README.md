@@ -626,7 +626,7 @@ sequenceDiagram
 
     participant Client as Client
     participant Back as Back Server<br>(AWS)
-    participant FB as Fireblocks
+    participant FB as  Gas Station<br>(AWS + Fireblocks)
     participant Registry
     participant ParkPayment
     participant PPC as PPC<br>(ParkPayCoin)
@@ -644,7 +644,7 @@ sequenceDiagram
     Note left of Back:ここまで数秒
 
     Back->>+FB: Exit(address)
-    FB->>+ParkPayment: transaction
+    FB->>+ParkPayment: Meta transaction(ERC2771)
     Note over ParkPayment: Exit(address)
     Note over ParkPayment: 料金自動計算
     ParkPayment->>PPC: transfer(Bob,利用料)
