@@ -354,6 +354,18 @@ npx projen deploy
 
 # 5. API
 
+| API                    | usage       | memo                             |
+| ---------------------- | ----------- | -------------------------------- |
+| v1/CreateVandM         | cardId,name | generate address & mint 1000PPC  |
+| v1/Deposit             | cardId      | deposit 600PPC                   |
+| v1/Entry               | cardId      | entry                            |
+| v1/Exit                | cardId      | exit                             |
+| v1/Withdraw            | cardId      | withdraw own deposit & initiate  |
+| v1/PPC/mint            | cardId      | mint 1000PPC                     |
+| v1/Info/getAddr        | cardId      | get address                      |
+| v1/Info/getParkPayInfo | cardId      | get ParkPayment info for address |
+|                        |             |                                  |
+
 ## 5.1. Task1 Create Vault and Mint(アドレス生成＆ミント)
 
 ```bash
