@@ -1,7 +1,7 @@
 //'use strict';
 
 // -------------------LIB------------------ //
-const GetterEngine = require("./lib/51A_getterRegistry");
+const GetterEngine = require("./lib/51A_getterAddr");
 const QueueEngine = require("./lib/51Q_QueueEngine");
 
 // -------------------ENVIRONMENT------------------ //

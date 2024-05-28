@@ -101,61 +101,6 @@ async function getRegistryByCard(cardId) {
     };
   }
 
-  // step 3-1B1 : check the parking status
-  console.log("step 3-1B1 : check the parking status-----------------------");
-  try {
-    const parkingStatus = await getParkingStatusByAddress(from_addr);
-    console.log("_getRegistry:parkingStatus::", parkingStatus.isParked);
-    if (parkingStatus.isParked) {
-      console.log("The car has already parked.");
-      return {
-        statusCode: 400,
-        body: JSON.stringify({
-          errorType: "ParkingStatusError",
-          errorMessage: "The car has already parked",
-        }),
-      };
-    }
-  } catch (error) {
-    console.error("Error checking parking status: ", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        errorType: "InternalError",
-        errorMessage: "Error checking parking status",
-      }),
-    };
-  }
-
-  // step 3-1B2 : check balance for user_addr in ParkingPayment
-  console.log("step 3-1B2 : check balance for user_addr in ParkingPayment-----------------------");
-  const amount = 30;
-  const weiAmount = await web3_alchemy.utils.toWei(amount.toString(), "ether");
-  let balanceInParkingPayment = 0;
-  try {
-    balanceInParkingPayment = await getBalanceInParkingPaymentByUserAddress(from_addr, token_addr);
-    console.log("Entry::balanceInParkingPayment::", balanceInParkingPayment);
-    if (balanceInParkingPayment === null || balanceInParkingPayment < weiAmount) {
-      console.log("Insufficient balance in ParkingPayment.");
-      return {
-        statusCode: 400,
-        body: JSON.stringify({
-          errorType: "BalanceError",
-          errorMessage: "Insufficient balance in ParkingPayment",
-        }),
-      };
-    }
-  } catch (error) {
-    console.error("Error checking balance in ParkingPayment: ", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        errorType: "InternalError",
-        errorMessage: "Error checking balance in ParkingPayment",
-      }),
-    };
-  }
-
   return from_addr;
 }
 
