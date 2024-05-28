@@ -21,9 +21,12 @@
 - [5. API](#5-api)
   - [5.1. Task1 Create Vault and Mint(アドレス生成＆ミント)](#51-task1-create-vault-and-mintアドレス生成ミント)
   - [5.2. Task2 Deposit(利用登録＆トークン預託)](#52-task2-deposit利用登録トークン預託)
-  - [Task3 Entry(入庫)](#task3-entry入庫)
-  - [Task4 Exit(出庫)](#task4-exit出庫)
-  - [Task5 Withdraw(契約終了＆引き出し)](#task5-withdraw契約終了引き出し)
+  - [5.3. Task3 Entry(入庫)](#53-task3-entry入庫)
+  - [5.4. Task4 Exit(出庫)](#54-task4-exit出庫)
+  - [5.5. Task5 Withdraw(契約終了＆引き出し)](#55-task5-withdraw契約終了引き出し)
+  - [5.6. Other tools: PPC/mint](#56-other-tools-ppcmint)
+- [6. Appendix](#6-appendix)
+  - [6.1. The study of gas cost (ガスコストの研究)](#61-the-study-of-gas-cost-ガスコストの研究)
 
 # 1. スマ婚要件
 
@@ -521,7 +524,7 @@ sequenceDiagram
 
 ```
 
-## Task3 Entry(入庫)
+## 5.3. Task3 Entry(入庫)
 
 ```bash
 
@@ -589,7 +592,7 @@ sequenceDiagram
 
 ```
 
-## Task4 Exit(出庫)
+## 5.4. Task4 Exit(出庫)
 
 ```bash
 
@@ -656,7 +659,30 @@ sequenceDiagram
 
 ```
 
-## Task5 Withdraw(契約終了＆引き出し)
+## 5.5. Task5 Withdraw(契約終了＆引き出し)
+
+```bash
+
+## request
+curl -w "\n%{http_code}\n" \
+-X POST https://**********.execute-api.ap-northeast-1.amazonaws.com/v1/Withdraw \
+-H "Content-Type: application/json" \
+-H "x-api-key: <YOUR_API_KEY>" \
+-d '{
+    "cardId": "id-2348"
+    }'
+
+## response
+{
+    "message": "request is received",
+    "result": {
+        "cardId": "id-2348",
+        "from_addr": "0x4e08bB063E9475404Ec20DA0DF1555652d483FEc",
+        "queue": "c3abd6f9-bc26-4acf-b8ad-353eef843ac4"
+    }
+}
+201
+```
 
 Back サーバがやってること
 
@@ -705,3 +731,46 @@ sequenceDiagram
     Note left of Back:ここまで90秒弱
 
 ```
+
+## 5.6. Other tools: PPC/mint
+
+```bash
+
+## request
+curl -w "\n%{http_code}\n" \
+-X POST https://**********.execute-api.ap-northeast-1.amazonaws.com/v1/PPC/mint \
+-H "Content-Type: application/json" \
+-H "x-api-key: <YOUR_API_KEY>" \
+-d '{
+    "cardId": "id-2348"
+    }'
+
+## response
+{
+    "message": "request is received",
+    "result": {
+        "cardId": "id-2348",
+        "from_addr": "0x4e08bB063E9475404Ec20DA0DF1555652d483FEc",
+        "queue": "c3abd6f9-bc26-4acf-b8ad-353eef843ac4"
+    }
+}
+201
+```
+
+you can get 1000PPC repeatedly (infinity)
+
+# 6. Appendix
+
+## 6.1. The study of gas cost (ガスコストの研究)
+
+| API            | send Transaction                       | Gas     | MetaTx     | original sender |
+| -------------- | -------------------------------------- | ------- | ---------- | --------------- |
+| 1. CreateVandM | PPC.`mint()`                           | 96,403  | ERC2771    | minters         |
+|                | Registry.`addId()`                     | 79,248  | No(native) | contract owners |
+| 2. Deposit     | PPC.`permit()`                         | 97,203  | ERC2612    | Alice           |
+|                | ParkPayment.`depositTokens()`          | 246,873 | ERC2771    | Alice           |
+| 3. Entry       | ParkPayment.`recordEntry()`            | 141,459 | ERC2771    | parking owners  |
+| 4. Exit        | ParkPayment.`recordExit()`             | 118,070 | ERC2771    | parking owners  |
+| 5. Withdraw    | ParkPayment.`withdrawRemainingFunds()` |         | ERC2771    | Alice           |
+| n. PPC/mint    | PPC.`mint()`                           | 79,303  | ERC2771    | minters         |
+|                |                                        |         |            |                 |
