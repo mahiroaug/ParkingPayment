@@ -193,19 +193,11 @@ npx hardhat run scripts/deploy_NFCAddressRegistry.js --network amoy_metamask
 METAMASK_PRIVATE_KEY=******
 METAMASK_ADDR_METAMASK=******
 
-
-
 #### ------- hardhat ------------------- #####
-#DomainSeparator parameter
-DOMAIN_SEPARATOR_NAME=MyForwarderDomain
-DOMAIN_SEPARATOR_VERSION=1
-DOMAIN_SEPARATOR_NAME_TOKEN=ParkPayCoinV2
-DOMAIN_SEPARATOR_VERSION_TOKEN=1
 #Polygonscan
 POLYGONSCAN_API_KEY=******
 
 #### ------- aws ----------------------- #####
-SSM_SECRET_NAME=******
 SSM_REGION=ap-northeast-1
 
 #### ------- alchemy ------------------- #####
@@ -217,28 +209,16 @@ ALCHEMY_HTTPS=https://polygon-amoy.g.alchemy.com/v2/********
 # Amoy Explorer
 EXPLOERE=https://amoy.polygonscan.com
 
-# JST_API_KEY
-JSTv2_API_KEY=******
-
-
-
 #### --------- GSN --------------------- #####
 API_GATEWAY_APIKEY=******
 API_GATEWAY_URL=https://******.execute-api.ap-northeast-1.amazonaws.com/v1
 DOMAIN_SEPARATOR_NAME_TOKEN=ParkPayCoinV2
 DOMAIN_SEPARATOR_VERSION_TOKEN=1
-## psql -h dbproxy-amppc.proxy-******.ap-northeast-1.rds.amazonaws.com -U postgres -d jstv2db
 
 #### ------ fireblocks ---------------- #####
-
-
-## API
 FIREBLOCKS_API_KEY_SIGNER=******
 FIREBLOCKS_URL=https://api.fireblocks.io
-FIREBLOCKS_VID=22 # ALICE
-FIREBLOCKS_VID_TARGET=23 #BOB
-FIREBLOCKS_VID_RELAYER=24 # RAY
-FIREBLOCKS_VID_DEPLOYER=24 # RAY
+
 FIREBLOCKS_VID_CONTRACTOWNER=24 # contract owner
 FIREBLOCKS_VID_CONTRACTOWNER_ADDR=0x46FA7F84edcED825F8F8E237fbf1B8C5954C2E0E
 FIREBLOCKS_VID_SERVICEOWNER=24
@@ -248,14 +228,6 @@ FIREBLOCKS_VID_PARKOWNER_ADDR=0x3F0996d182aB9c1942b7b46dAb35e5eEc154fD75
 FIREBLOCKS_ASSET_ID=AMOY_POLYGON_TEST
 FIREBLOCKS_ASSET_ID_MYTOKEN=PPC_AMOY_POLYGON_TEST_TAB5
 POLYGON_RPC_URL=https://rpc.ankr.com/polygon_amoy
-
-### memo : address
-## ALICE 22  0x26969ed0c4ebAd2e491a5fba4e6fdbb06cD972Cc
-## BOB   23  0xafBf06e0D57bAba855d38e21e30d74469c17D31e
-## RAY   24  0x46FA7F84edcED825F8F8E237fbf1B8C5954C2E0E
-## ELEN  39  0x3F0996d182aB9c1942b7b46dAb35e5eEc154fD75
-## Frieren 102 0xA9dE95fD801F3Ae916A39C0eeF706239162ebe37
-## Giorno 103 0x7224C3e745381F4C0579a5Bc8975c397Cbb45297
 
 ####-------------------------------------------------####
 #### Polygon Amoy by METAMASK at 2024/05/16
