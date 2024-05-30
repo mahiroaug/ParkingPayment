@@ -97,7 +97,11 @@ async function _permitSpender(from_addr, token_addr, amount) {
 
 async function _deposit(from_addr, po_addr, token_addr, amount) {
   // deposit -----------------
-  const data = parkingPayment_alc.methods.depositTokens(token_addr, amount, po_addr);
+  const data = parkingPayment_alc.methods.depositTokens(
+    token_addr,
+    amount,
+    po_addr
+  );
 
   const requestParam = {
     from_addr: from_addr,
@@ -153,13 +157,21 @@ async function _CheckParkPayment(requsetParam) {
 
   // step 2-2D: check parking payment
   console.log("step 2-2D: check parking payment-------------------------");
-  const designatedParkingOwner = await getDesignatedParkingOwnerByUserAddress(from_addr);
-  console.log("_CheckParkPayment:designatedParkingOwner::", designatedParkingOwner);
+  const designatedParkingOwner = await getDesignatedParkingOwnerByUserAddress(
+    from_addr
+  );
+  console.log(
+    "_CheckParkPayment:designatedParkingOwner::",
+    designatedParkingOwner
+  );
   const balanceInParkingPayment = await getBalanceInParkingPaymentByUserAddress(
     from_addr,
     token_addr
   );
-  console.log("_CheckParkPayment:balanceInParkingPayment::", balanceInParkingPayment);
+  console.log(
+    "_CheckParkPayment:balanceInParkingPayment::",
+    balanceInParkingPayment
+  );
 }
 
 /////////////////////////////////////////
@@ -180,7 +192,7 @@ async function Deposit(from_addr) {
   const po_addr = parkingOwners[poIndex].address;
 
   // deposit amount
-  const amount = 600;
+  const amount = 1000;
   const weiAmount = await web3_alchemy.utils.toWei(amount.toString(), "ether");
 
   // set request param
@@ -199,7 +211,9 @@ async function Deposit(from_addr) {
     !requestParam.token_addr ||
     !requestParam.amount
   ) {
-    console.error("Deposit: Error - Missing required parameters in requestParam");
+    console.error(
+      "Deposit: Error - Missing required parameters in requestParam"
+    );
     return;
   }
 

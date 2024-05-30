@@ -247,25 +247,89 @@ TOKENPROXY_CA=0xc692CDb48Ad01Fe7388A213374869556C88B1fFb
 
 ```javascript
 const minters = [
-  { name: "JSTV21-MINTER01", vaultId: 237, address: "0xd77bA82501270D7Cf0df7124Cd1a7f39719E357A" },
-  { name: "JSTV21-MINTER02", vaultId: 238, address: "0x5B60b4d94c5656F1bbd722A0344e8DFDE066840b" },
-  { name: "JSTV21-MINTER03", vaultId: 239, address: "0xBbF86cE24b24031C694BA4219dEe29Fc894f0398" },
-  { name: "JSTV21-MINTER04", vaultId: 240, address: "0x615Ae636e6dEBeA90042585492Aa2f4a93E5BDD9" },
-  { name: "JSTV21-MINTER05", vaultId: 241, address: "0x79A307d20b11E53a55B443Dab353Fb7Ba8FF108e" },
-  { name: "JSTV21-MINTER06", vaultId: 242, address: "0x85Fc83af294A30fD49A4C26c42294A211689EeaB" },
-  { name: "JSTV21-MINTER07", vaultId: 243, address: "0xB8843E89B36b57A5649916efB60F1783fEC5346b" },
-  { name: "JSTV21-MINTER08", vaultId: 244, address: "0x44AD7b8b9302ACA364d75915ec5cBA122B2B096e" },
+  {
+    name: "JSTV21-MINTER01",
+    vaultId: 237,
+    address: "0xd77bA82501270D7Cf0df7124Cd1a7f39719E357A",
+  },
+  {
+    name: "JSTV21-MINTER02",
+    vaultId: 238,
+    address: "0x5B60b4d94c5656F1bbd722A0344e8DFDE066840b",
+  },
+  {
+    name: "JSTV21-MINTER03",
+    vaultId: 239,
+    address: "0xBbF86cE24b24031C694BA4219dEe29Fc894f0398",
+  },
+  {
+    name: "JSTV21-MINTER04",
+    vaultId: 240,
+    address: "0x615Ae636e6dEBeA90042585492Aa2f4a93E5BDD9",
+  },
+  {
+    name: "JSTV21-MINTER05",
+    vaultId: 241,
+    address: "0x79A307d20b11E53a55B443Dab353Fb7Ba8FF108e",
+  },
+  {
+    name: "JSTV21-MINTER06",
+    vaultId: 242,
+    address: "0x85Fc83af294A30fD49A4C26c42294A211689EeaB",
+  },
+  {
+    name: "JSTV21-MINTER07",
+    vaultId: 243,
+    address: "0xB8843E89B36b57A5649916efB60F1783fEC5346b",
+  },
+  {
+    name: "JSTV21-MINTER08",
+    vaultId: 244,
+    address: "0x44AD7b8b9302ACA364d75915ec5cBA122B2B096e",
+  },
 ];
 
 const parkingOwners = [
-  { name: "PP-PO01", vaultId: 272, address: "0x17EeB1e2D55AF08edAbB47bEA0659A05daE2fEC3" },
-  { name: "PP-PO02", vaultId: 273, address: "0xb0d7E1113B97af3d007bFA1bc9F203762f220045" },
-  { name: "PP-PO03", vaultId: 274, address: "0x55aE9fa8Cc00693cc05Cb756A441d0344b2711b3" },
-  { name: "PP-PO04", vaultId: 275, address: "0x47b6A34Da1D39aEaF784a2732A087f415C802E4b" },
-  { name: "PP-PO05", vaultId: 276, address: "0x060Ddefc55FCF6a24C50CB8876294950A8733C94" },
-  { name: "PP-PO06", vaultId: 277, address: "0xB8c42Ea9987fDAE00f4f7619aea65ee392471ff5" },
-  { name: "PP-PO07", vaultId: 278, address: "0x12D2776AA98D08199678Dadeb669b7deB8b83D8A" },
-  { name: "PP-PO08", vaultId: 279, address: "0x82Cad2B754218796123a0Dd626281779D619CE5D" },
+  {
+    name: "PP-PO01",
+    vaultId: 272,
+    address: "0x17EeB1e2D55AF08edAbB47bEA0659A05daE2fEC3",
+  },
+  {
+    name: "PP-PO02",
+    vaultId: 273,
+    address: "0xb0d7E1113B97af3d007bFA1bc9F203762f220045",
+  },
+  {
+    name: "PP-PO03",
+    vaultId: 274,
+    address: "0x55aE9fa8Cc00693cc05Cb756A441d0344b2711b3",
+  },
+  {
+    name: "PP-PO04",
+    vaultId: 275,
+    address: "0x47b6A34Da1D39aEaF784a2732A087f415C802E4b",
+  },
+  {
+    name: "PP-PO05",
+    vaultId: 276,
+    address: "0x060Ddefc55FCF6a24C50CB8876294950A8733C94",
+  },
+  {
+    name: "PP-PO06",
+    vaultId: 277,
+    address: "0xB8c42Ea9987fDAE00f4f7619aea65ee392471ff5",
+  },
+  {
+    name: "PP-PO07",
+    vaultId: 278,
+    address: "0x12D2776AA98D08199678Dadeb669b7deB8b83D8A",
+  },
+  {
+    name: "PP-PO08",
+    vaultId: 279,
+    address: "0x82Cad2B754218796123a0Dd626281779D619CE5D",
+  },
 ];
 
 module.exports = {
@@ -329,7 +393,7 @@ npx projen deploy
 | API                    | usage       | memo                             |
 | ---------------------- | ----------- | -------------------------------- |
 | v1/CreateVandM         | cardId,name | generate address & mint 1000PPC  |
-| v1/Deposit             | cardId      | deposit 600PPC                   |
+| v1/Deposit             | cardId      | deposit 1000PPC                  |
 | v1/Entry               | cardId      | entry                            |
 | v1/Exit                | cardId      | exit                             |
 | v1/Withdraw            | cardId      | withdraw own deposit & initiate  |
@@ -445,9 +509,9 @@ Back サーバがやってること
 - Registry コントラクトに問い合わせて address を入手する
 - Client にレスポンスを返す（ラウンドトリップタイム目標 3 秒）
 - 異常系の場合はここで終了。正常系の場合はバックグラウンド処理に移行する（→SQS→Lambda）
-- address から ParkPayment コントラクトに 600PPC の allowance を与える
+- address から ParkPayment コントラクトに 1000PPC の allowance を与える
 - address から ParkPayment コントラクトに利用登録(デポジット)を行う
-- ParkPayment コントラクトは address から 600PPC を受け取る
+- ParkPayment コントラクトは address から 1000PPC を受け取る
 
 ```mermaid
 sequenceDiagram
@@ -469,20 +533,20 @@ sequenceDiagram
 
     Note left of Back:ここまで数秒
 
-    Back->>+GSN: Permit(address, ParkPayment 600PPC)
+    Back->>+GSN: Permit(address, ParkPayment 1000PPC)
     GSN-->>-Back: result
     GSN->>+PPC: Meta transaction(ERC2612)
-    Note over PPC: permit(address, ParkPayment 600PPC)
+    Note over PPC: permit(address, ParkPayment 1000PPC)
     PPC-->>-GSN: resTx
 
     Note left of Back:ここまで１分弱
 
-    Back->>+GSN: Deposit(address, PO, 600PPC)
+    Back->>+GSN: Deposit(address, PO, 1000PPC)
     GSN-->>-Back: result
     GSN->>+ParkPayment: Meta transaction(ERC2771)
-    Note over ParkPayment: Deposit(address, PO, 600PPC)
-    ParkPayment->>+PPC: tranfserFrom(600PPC)
-    Note over PPC: tranfserFrom(ParkPayment 600PPC)
+    Note over ParkPayment: Deposit(address, PO, 1000PPC)
+    ParkPayment->>+PPC: tranfserFrom(1000PPC)
+    Note over PPC: tranfserFrom(ParkPayment 1000PPC)
     PPC-->>-ParkPayment: result
     ParkPayment->>Event: DepositMade
     ParkPayment-->>-GSN: resTx
