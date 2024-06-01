@@ -93,6 +93,42 @@ async function getRegistryByCard(cardId) {
       }),
     };
   }
+
+  // step 2-1B : check PPC balance for user_addr
+  console.log("step 2-1B : check PPC balance for user_addr--------------------------");
+
+  const web3_alchemy = getWeb3Alchemy();
+  const token_alc = getTokenAlc();
+
+  const amount = 1000;
+  const weiAmount = await web3_alchemy.utils.toWei(amount.toString(), "ether");
+  console.log("weiAmount:", weiAmount);
+
+  let coinBalance = 0;
+  try {
+    coinBalance = await token_alc.methods.balanceOf(from_addr).call();
+    console.log("coinBalance:", coinBalance);
+    if (BigInt(coinBalance) < BigInt(weiAmount)) {
+      console.error("Error: Insufficient balance");
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          errorType: "InsufficientBalance",
+          errorMessage: "Insufficient balance",
+        }),
+      };
+    }
+  } catch (error) {
+    console.error("Error checking PPC balance: ", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        errorType: "InternalError",
+        errorMessage: "Error checking PPC balance",
+      }),
+    };
+  }
+
   return from_addr;
 }
 

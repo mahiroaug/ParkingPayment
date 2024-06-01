@@ -131,11 +131,21 @@ async function getRegistryByCard(cardId) {
   console.log("step 3-1B2 : check balance for user_addr in ParkingPayment-----------------------");
   const amount = 30;
   const weiAmount = await web3_alchemy.utils.toWei(amount.toString(), "ether");
+  console.log("weiAmount:", weiAmount);
+
   let balanceInParkingPayment = 0;
   try {
     balanceInParkingPayment = await getBalanceInParkingPaymentByUserAddress(from_addr, token_addr);
     console.log("Entry::balanceInParkingPayment::", balanceInParkingPayment);
-    if (balanceInParkingPayment === null || balanceInParkingPayment < weiAmount) {
+    console.log(
+      "balanceInParkingPayment type:",
+      typeof balanceInParkingPayment,
+      " value:",
+      balanceInParkingPayment
+    );
+    console.log("weiAmount type:", typeof weiAmount, " value:", weiAmount);
+    console.log("if :", BigInt(balanceInParkingPayment) < BigInt(weiAmount));
+    if (BigInt(balanceInParkingPayment) < BigInt(weiAmount)) {
       console.log("Insufficient balance in ParkingPayment.");
       return {
         statusCode: 400,
